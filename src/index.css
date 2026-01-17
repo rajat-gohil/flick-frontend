@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* global font */
+html, body {
+  font-family: "Lato", system-ui, sans-serif;
+}
