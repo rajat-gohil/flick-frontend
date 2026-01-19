@@ -72,7 +72,7 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          className="w-full rounded-xl bg-primary py-3 font-bold text-white"
+          className="w-full rounded-xl bg-black py-3 font-bold text-white"
         >
           Login
         </button>
