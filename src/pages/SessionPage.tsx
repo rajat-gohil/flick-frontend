@@ -29,6 +29,11 @@ type Session = {
   ended: boolean;
 };
 
+type ApiError = {
+  status?: number;
+  error?: string;
+};
+
 /* ============================
    COMPONENT
 ============================ */
@@ -208,11 +213,20 @@ export default function SessionPage() {
       }
 
       setCurrentIndex((prev) => prev + 1);
-    } catch {
+
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
+
+      // 409 means match already created by other user
+      if (apiError.status === 409) {
+        // Do nothing – WebSocket will show match UI
+        return;
+      }
+
       if (!session?.ended) {
         setError("Swipe failed");
+      }
     }
-  }
   }
 
   /* ============================
