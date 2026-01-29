@@ -205,11 +205,8 @@ export default function SessionPage() {
       );
 
       if (res.match) {
-        trackEvent("match_created", {
-          movie_id: movie.id,
-        });
-
-        // Match UI will be triggered via WebSocket
+        setMatchedMovie(movie);
+        setShowMatch(true);
         return;
       }
 
