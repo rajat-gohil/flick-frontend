@@ -67,7 +67,11 @@ export default function SessionPage() {
     const protocol =
       window.location.protocol === "https:" ? "wss" : "ws";
 
-    const wsUrl = `${protocol}://${import.meta.env.VITE_BACKEND_HOST}/ws/session/${id}/`;
+    const backendHost =
+      import.meta.env.VITE_BACKEND_HOST ||
+      window.location.hostname;
+
+    const wsUrl = `${protocol}://${backendHost}/ws/session/${id}/`;
 
     const socket = new WebSocket(wsUrl);
 
