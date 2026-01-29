@@ -56,6 +56,49 @@ export default function SessionPage() {
   const [error, setError] = useState("");
 
   /* ============================
+     WEBSOCKET (MATCH SYNC)
+  ============================ */
+
+  useEffect(() => {
+    if (!id) return;
+
+    const protocol =
+      window.location.protocol === "https:" ? "wss" : "ws";
+
+    const wsUrl = `${protocol}://${import.meta.env.VITE_BACKEND_HOST}/ws/session/${id}/`;
+
+    const socket = new WebSocket(wsUrl);
+
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        if (data.type === "match_created") {
+          setMatchedMovie({
+            id: data.movie_id,
+            title: data.movie_title,
+            overview: "",
+            poster_url: "",
+          });
+
+          setShowMatch(true);
+        }
+      } catch {
+        // ignore malformed events
+      }
+    };
+
+    socket.onerror = () => {
+      // silent failure; polling remains fallback
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, [id]);
+
+
+  /* ============================
      SESSION POLLING
   ============================ */
 
@@ -160,8 +203,7 @@ export default function SessionPage() {
           movie_id: movie.id,
         });
 
-        setMatchedMovie(movie);
-        setShowMatch(true);
+        // Match UI will be triggered via WebSocket
         return;
       }
 
