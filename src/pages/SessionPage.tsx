@@ -437,6 +437,21 @@ if (currentIndex >= movies.length) {
 
   return (
     <div className="mx-auto mt-12 max-w-md px-6 space-y-4 text-center">
+      <div className="flex justify-end">
+        <button
+          onClick={async () => {
+            await apiRequest("/api/sessions/end/", {
+              method: "POST",
+              body: JSON.stringify({
+                session_id: Number(id),
+              }),
+            });
+          }}
+          className="text-sm font-semibold text-gray-500 hover:text-black"
+        >
+          End Session
+        </button>
+      </div> 
       <h2 className="text-xl font-bold">
         {movie.title}
       </h2>
