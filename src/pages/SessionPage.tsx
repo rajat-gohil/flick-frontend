@@ -130,7 +130,12 @@ export default function SessionPage() {
   async function handleSwipe(
     reaction: "like" | "dislike"
   ) {
-    if (!session || session.ended) return;
+    if (!session) return;
+
+    if (session.ended) {
+      // Session already ended – let polling UI take over
+      return;
+    }
 
     const movie = movies[currentIndex];
     if (!movie) return;
@@ -162,8 +167,10 @@ export default function SessionPage() {
 
       setCurrentIndex((prev) => prev + 1);
     } catch {
-      setError("Swipe failed");
+      if (!session?.ended) {
+        setError("Swipe failed");
     }
+  }
   }
 
   /* ============================
@@ -194,8 +201,12 @@ export default function SessionPage() {
     return (
       <div className="mx-auto mt-24 max-w-md px-6 space-y-6 text-center">
         <h1 className="text-2xl font-bold">
-          Session Ended
+          This session has ended
         </h1>
+
+        <p className="text-sm text-gray-600">
+          Your partner ended the session.
+        </p>
 
         <button
           onClick={loadMatchHistory}
@@ -321,17 +332,46 @@ export default function SessionPage() {
     );
   }
 
-  /* ============================
-     NO MORE MOVIES
-  ============================ */
+/* ============================
+   NO MORE MOVIES
+============================ */
 
-  if (currentIndex >= movies.length) {
-    return (
-      <div className="mt-24 text-center">
-        No more movies 🎬
-      </div>
-    );
-  }
+if (currentIndex >= movies.length) {
+  return (
+    <div className="mx-auto mt-24 max-w-md px-6 space-y-4 text-center">
+      <h2 className="text-xl font-bold">
+        You’ve reached the end 🎬
+      </h2>
+
+      <p className="text-sm text-gray-600">
+        You’ve seen all available movies for this session.
+      </p>
+
+      <button
+        onClick={async () => {
+          try {
+            await apiRequest("/api/sessions/end/", {
+              method: "POST",
+              body: JSON.stringify({
+                session_id: Number(id),
+              }),
+            });
+
+            trackEvent("session_end_manual", {
+              session_id: Number(id),
+              reason: "no_more_movies",
+            });
+          } catch {
+            setError("Failed to end session");
+          }
+        }}
+        className="w-full rounded-xl bg-black py-3 font-bold text-white"
+      >
+        End Session
+      </button>
+    </div>
+  );
+}
 
   /* ============================
      SWIPING UI
