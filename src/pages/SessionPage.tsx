@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiRequest } from "../lib/api";
 import { trackEvent } from "../lib/analytics";
-import type { ApiError } from "../lib/api";
 
 /* ============================
    TYPES (MATCH BACKEND)
@@ -56,6 +55,8 @@ export default function SessionPage() {
   const [loadingMatches, setLoadingMatches] = useState(false);
 
   const [error, setError] = useState("");
+
+  const [sessionLocked, setSessionLocked] = useState(false);
 
   /* ============================
      WEBSOCKET (MATCH SYNC)
@@ -181,8 +182,7 @@ export default function SessionPage() {
   ) {
     if (!session) return;
 
-    if (session.ended) {
-      // Session already ended – let polling UI take over
+    if (session.ended || sessionLocked) {
       return;
     }
 
@@ -212,24 +212,20 @@ export default function SessionPage() {
 
       setCurrentIndex((prev) => prev + 1);
 
-      } catch (err: unknown) {
-        if (
-          typeof err === "object" &&
-          err !== null &&
-          "status" in err
-        ) {
-          const apiErr = err as ApiError;
-
-          // 409 = match already created by other user
-          if (apiErr.status === 409) {
-            return; // WebSocket will show match UI
-          }
-        }
-
-        if (!session?.ended) {
-          setError("Swipe failed");
-        }
+    } catch (err: unknown) {
+      if (
+        typeof err === "object" &&
+        err !== null &&
+        "error" in err &&
+        (err as { error?: string }).error === "Session has ended"
+      ) {
+        // Silent ignore — UI will transition via polling / WS
+        return;
       }
+
+      setError("Swipe failed");
+    }
+
   }
 
   /* ============================
@@ -382,6 +378,7 @@ export default function SessionPage() {
                 session_id: Number(id),
               }),
             });
+            setSessionLocked(true);
           }}
           className="w-full rounded-xl border py-3 font-bold"
         >
@@ -415,6 +412,7 @@ if (currentIndex >= movies.length) {
                 session_id: Number(id),
               }),
             });
+            setSessionLocked(true);
 
             trackEvent("session_end_manual", {
               session_id: Number(id),
@@ -449,6 +447,7 @@ if (currentIndex >= movies.length) {
                 session_id: Number(id),
               }),
             });
+            setSessionLocked(true);
           }}
           className="text-sm font-semibold text-gray-500 hover:text-black"
         >

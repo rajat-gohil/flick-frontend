@@ -1,10 +1,5 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export type ApiError = {
-  status: number;
-  body: unknown;
-};
-
 export async function apiRequest(
   endpoint: string,
   options: RequestInit = {}
@@ -22,16 +17,17 @@ export async function apiRequest(
     headers,
   });
 
+  // Read response safely (handles empty bodies)
   const text = await response.text();
-  const body = text ? JSON.parse(text) : null;
+  const data = text ? JSON.parse(text) : null;
 
   if (!response.ok) {
-    const error: ApiError = {
+    // Throw a structured object without custom types
+    throw {
       status: response.status,
-      body,
+      data,
     };
-    throw error;
   }
 
-  return body;
+  return data;
 }
