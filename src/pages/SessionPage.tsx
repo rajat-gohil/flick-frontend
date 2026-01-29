@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiRequest } from "../lib/api";
 import { trackEvent } from "../lib/analytics";
+import type { ApiError } from "../lib/api";
 
 /* ============================
    TYPES (MATCH BACKEND)
@@ -29,10 +30,6 @@ type Session = {
   ended: boolean;
 };
 
-type ApiError = {
-  status?: number;
-  error?: string;
-};
 
 /* ============================
    COMPONENT
@@ -214,19 +211,24 @@ export default function SessionPage() {
 
       setCurrentIndex((prev) => prev + 1);
 
-    } catch (err: unknown) {
-      const apiError = err as ApiError;
+      } catch (err: unknown) {
+        if (
+          typeof err === "object" &&
+          err !== null &&
+          "status" in err
+        ) {
+          const apiErr = err as ApiError;
 
-      // 409 means match already created by other user
-      if (apiError.status === 409) {
-        // Do nothing – WebSocket will show match UI
-        return;
-      }
+          // 409 = match already created by other user
+          if (apiErr.status === 409) {
+            return; // WebSocket will show match UI
+          }
+        }
 
-      if (!session?.ended) {
-        setError("Swipe failed");
+        if (!session?.ended) {
+          setError("Swipe failed");
+        }
       }
-    }
   }
 
   /* ============================
