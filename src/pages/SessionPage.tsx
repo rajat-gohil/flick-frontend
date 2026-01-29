@@ -63,7 +63,7 @@ export default function SessionPage() {
 
   useEffect(() => {
     if (!id) return;
-
+      console.log("WS HOST:", import.meta.env.VITE_BACKEND_HOST);
     const protocol =
       window.location.protocol === "https:" ? "wss" : "ws";
 
@@ -74,7 +74,7 @@ export default function SessionPage() {
     const wsUrl = `${protocol}://${backendHost}/ws/session/${id}/`;
 
     const socket = new WebSocket(wsUrl);
-
+    console.log("WS URL:", wsUrl);
     socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
