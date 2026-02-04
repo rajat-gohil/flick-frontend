@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiRequest } from "../lib/api";
 import { trackEvent } from "../lib/analytics";
+import confetti from "canvas-confetti";
 
 /* ============================
    TYPES (MATCH BACKEND)
@@ -58,6 +59,8 @@ export default function SessionPage() {
   const [error, setError] = useState("");
 
   const [sessionLocked, setSessionLocked] = useState(false);
+  const [partnerSwiping, setPartnerSwiping] = useState(false);
+
 
 /* ============================
    LOAD MATCH HISTORY
@@ -111,23 +114,41 @@ export default function SessionPage() {
     try {
       const data = JSON.parse(event.data);
 
-      /* MATCH BROADCAST (BOTH USERS) */
-      if (data.type === "match_event") {
-        setMatchedMovie({
-          id: data.movie_id,
-          title: data.movie_title,
-          overview: "",
-          poster_url: "",
-        });
+      /* MATCH BROADCAST (BOTH USERS) AND SWIPING INDICATOR (BOTH USERS) */
+      if (data.type === "partner_swiping") {
+        setPartnerSwiping(true);
 
-        setShowMatch(true);
-
-        trackEvent("match_popup_shown", {
-          session_id: Number(id),
-          movie_id: data.movie_id,
-          source: "websocket",
-        });
+        // auto-hide after 1.5s
+        setTimeout(() => {
+          setPartnerSwiping(false);
+        }, 1500);
       }
+
+      
+        if (data.type === "match_event") {
+          setMatchedMovie({
+            id: data.movie_id,
+            title: data.movie_title,
+            overview: "",
+            poster_url: "",
+          });
+
+          setShowMatch(true);
+
+          // 🎉 Confetti side-effect (outside state setters)
+          confetti({
+            particleCount: 80,
+            spread: 60,
+            scalar: 0.8,
+          });
+
+          trackEvent("match_popup_shown", {
+            session_id: Number(id),
+            movie_id: data.movie_id,
+            source: "websocket",
+          });
+        }
+
 
       /* SESSION ENDED BROADCAST (BOTH USERS) */
       if (data.type === "session_ended") {
@@ -325,6 +346,12 @@ export default function SessionPage() {
               key={`${m.movie_id}-${index}`}
               className="border rounded-xl p-4 space-y-2"
             >
+              {partnerSwiping && (
+                <p className="text-xs text-gray-500 animate-pulse">
+                  Your partner is swiping…
+                </p>
+              )}
+
               <h2 className="font-bold">
                 {m.movie_title}
               </h2>
