@@ -60,6 +60,8 @@ export default function SessionPage() {
 
   const [sessionLocked, setSessionLocked] = useState(false);
   const [partnerSwiping, setPartnerSwiping] = useState(false);
+  const [partnerDisconnected, setPartnerDisconnected] = useState(false);
+
 
 
 /* ============================
@@ -114,7 +116,15 @@ export default function SessionPage() {
     try {
       const data = JSON.parse(event.data);
 
-      /* MATCH BROADCAST (BOTH USERS) AND SWIPING INDICATOR (BOTH USERS) */
+      /* MATCH BROADCAST (BOTH USERS) AND SWIPING INDICATOR (BOTH USERS) AND PARTNER DISCONNECTING INDICATOR*/
+      if (data.type === "partner_disconnected") {
+        setPartnerDisconnected(true);
+
+        trackEvent("partner_disconnected", {
+          session_id: Number(id),
+        });
+      }
+
       if (data.type === "partner_swiping") {
         setPartnerSwiping(true);
 
@@ -535,7 +545,11 @@ if (currentIndex >= movies.length) {
       <h2 className="text-xl font-bold">
         {movie.title}
       </h2>
-
+        {partnerDisconnected && (
+          <div className="mb-2 rounded-lg bg-yellow-100 px-3 py-2 text-xs text-yellow-800">
+            Your partner disconnected. Waiting…
+          </div>
+        )}
       <img
         src={movie.poster_url}
         className="rounded-xl mx-auto"
