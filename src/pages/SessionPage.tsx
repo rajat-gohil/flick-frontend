@@ -14,6 +14,7 @@ type Movie = {
   title: string;
   overview: string;
   poster_url: string;
+  streaming_providers?: Record<string, string[]>;
 };
 
 type Match = {
@@ -60,11 +61,13 @@ export default function SessionPage() {
   const [error, setError] = useState("");
 
   const [sessionLocked, setSessionLocked] = useState(false);
-  const [partnerSwiping, setPartnerSwiping] = useState(false);
   const [partnerDisconnected, setPartnerDisconnected] = useState(false);
   const [swipeDirection, setSwipeDirection] =
   useState<"like" | "dislike" | null>(null);
   const SWIPE_THRESHOLD = 120;
+  const [partnerStatus, setPartnerStatus] =
+  useState<"online" | "offline" | "swiping">("online");
+
 
 
 
@@ -130,22 +133,25 @@ export default function SessionPage() {
       }
 
       if (data.type === "partner_swiping") {
-        setPartnerSwiping(true);
+        setPartnerStatus("swiping");
 
-        // auto-hide after 1.5s
         setTimeout(() => {
-          setPartnerSwiping(false);
+          setPartnerStatus("online");
         }, 1500);
       }
-
-      
-        if (data.type === "match_event") {
-          setMatchedMovie({
-            id: data.movie_id,
-            title: data.movie_title,
-            overview: "",
-            poster_url: "",
-          });
+      if (data.type === "presence") {
+        if (data.user_id !== undefined) {
+          setPartnerStatus(data.status);
+        }
+      }
+    
+      if (data.type === "match_event") {
+        setMatchedMovie({
+          id: data.movie_id,
+          title: data.movie_title,
+          overview: "",
+          poster_url: "",
+        });
 
           setShowMatch(true);
 
@@ -362,7 +368,7 @@ export default function SessionPage() {
               key={`${m.movie_id}-${index}`}
               className="border rounded-xl p-4 space-y-2"
             >
-              {partnerSwiping && (
+              {partnerStatus && (
                 <p className="text-xs text-gray-500 animate-pulse">
                   Your partner is swiping…
                 </p>
@@ -531,8 +537,14 @@ if (currentIndex >= movies.length) {
   const movie = movies[currentIndex];
 
   return (
-    <div className="mx-auto mt-12 max-w-md px-6 space-y-4 text-center">
+        <div className="mx-auto mt-12 max-w-md px-6 space-y-4 text-center">
       <div className="flex justify-end">
+        <div className="text-xs text-gray-500 mb-2">
+          {partnerStatus === "online" && "🟢 Partner online"}
+          {partnerStatus === "swiping" && "✋ Partner is swiping…"}
+          {partnerStatus === "offline" && "🔴 Partner disconnected"}
+        </div>
+ 
         <button
           onClick={async () => {
             await apiRequest("/api/sessions/end/", {
