@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { apiRequest } from "../lib/api";
 import { trackEvent } from "../lib/analytics";
 import confetti from "canvas-confetti";
+import { motion, AnimatePresence } from "framer-motion";
 
 /* ============================
    TYPES (MATCH BACKEND)
@@ -61,6 +62,8 @@ export default function SessionPage() {
   const [sessionLocked, setSessionLocked] = useState(false);
   const [partnerSwiping, setPartnerSwiping] = useState(false);
   const [partnerDisconnected, setPartnerDisconnected] = useState(false);
+  const [swipeDirection, setSwipeDirection] =
+  useState<"like" | "dislike" | null>(null);
 
 
 
@@ -271,6 +274,8 @@ export default function SessionPage() {
 // Match popup will be triggered via WebSocket for BOTH users
 
       setCurrentIndex((prev) => prev + 1);
+      setSwipeDirection(null);
+
 
     } catch (err: unknown) {
       if (
@@ -542,38 +547,64 @@ if (currentIndex >= movies.length) {
           End Session
         </button>
       </div> 
-      <h2 className="text-xl font-bold">
-        {movie.title}
-      </h2>
-        {partnerDisconnected && (
-          <div className="mb-2 rounded-lg bg-yellow-100 px-3 py-2 text-xs text-yellow-800">
-            Your partner disconnected. Waiting…
-          </div>
-        )}
-      <img
-        src={movie.poster_url}
-        className="rounded-xl mx-auto"
-      />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={movie.id}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{
+                opacity: 0,
+                x: swipeDirection === "like" ? 200 : -200,
+                rotate: swipeDirection === "like" ? 10 : -10,
+              }}
+              transition={{ duration: 0.25 }}
+              className="space-y-4"
+            >
+              <h2 className="text-xl font-bold">
+                {movie.title}
+              </h2>
+              {partnerDisconnected && (
+                <div className="mb-2 rounded-lg bg-yellow-100 px-3 py-2 text-xs text-yellow-800">
+                  Your partner disconnected. Waiting…
+                </div>
+              )}
 
-      <p className="text-sm text-gray-600">
-        {movie.overview}
-      </p>
+              <img
+                src={movie.poster_url}
+                className="rounded-xl mx-auto"
+              />
+
+              <p className="text-sm text-gray-600">
+                {movie.overview}
+              </p>
+            </motion.div>
+          </AnimatePresence>
+
 
       <div className="flex gap-4">
         <button
-          onClick={() => handleSwipe("dislike")}
-          className="flex-1 rounded-xl bg-red-500 py-3 text-white font-bold"
-        >
-          Dislike
-        </button>
+        onClick={() => {
+          setSwipeDirection("dislike");
+          handleSwipe("dislike");
+        }}
+        className="flex-1 rounded-xl bg-red-500 py-3 text-white font-bold"
+      >
+        Dislike
+      </button>
 
-        <button
-          onClick={() => handleSwipe("like")}
-          className="flex-1 rounded-xl bg-green-500 py-3 text-white font-bold"
-        >
-          Like
-        </button>
+      <button
+        onClick={() => {
+          setSwipeDirection("like");
+          handleSwipe("like");
+        }}
+        className="flex-1 rounded-xl bg-green-500 py-3 text-white font-bold"
+      >
+        Like
+      </button>
+
       </div>
     </div>
   );
 }
+
+
