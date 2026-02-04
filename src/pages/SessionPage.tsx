@@ -112,7 +112,7 @@ export default function SessionPage() {
       try {
         const data = JSON.parse(event.data);
 
-        if (data.type === "match_created") {
+        if (data.type === "match_event") {
           setMatchedMovie({
             id: data.movie_id,
             title: data.movie_title,
@@ -204,7 +204,7 @@ export default function SessionPage() {
     if (!movie) return;
 
     try {
-      const res = await apiRequest("/api/swipes/", {
+      await apiRequest("/api/swipes/", {
         method: "POST",
         body: JSON.stringify({
           session: Number(id),
@@ -218,11 +218,8 @@ export default function SessionPage() {
         { movie_id: movie.id }
       );
 
-      if (res.match) {
-        setMatchedMovie(movie);
-        setShowMatch(true);
-        return;
-      }
+// Do nothing here.
+// Match popup will be triggered via WebSocket for BOTH users
 
       setCurrentIndex((prev) => prev + 1);
 
