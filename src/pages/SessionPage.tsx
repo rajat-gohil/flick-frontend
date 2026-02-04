@@ -64,6 +64,7 @@ export default function SessionPage() {
   const [partnerDisconnected, setPartnerDisconnected] = useState(false);
   const [swipeDirection, setSwipeDirection] =
   useState<"like" | "dislike" | null>(null);
+  const SWIPE_THRESHOLD = 120;
 
 
 
@@ -550,15 +551,29 @@ if (currentIndex >= movies.length) {
           <AnimatePresence mode="wait">
             <motion.div
               key={movie.id}
-              initial={{ opacity: 0, y: 30 }}
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={0.2}
+              onDragEnd={(_, info) => {
+                if (info.offset.y > SWIPE_THRESHOLD) {
+                  // ⬇️ Swipe DOWN → LIKE
+                  setSwipeDirection("like");
+                  handleSwipe("like");
+                } else if (info.offset.y < -SWIPE_THRESHOLD) {
+                  // ⬆️ Swipe UP → DISLIKE
+                  setSwipeDirection("dislike");
+                  handleSwipe("dislike");
+                }
+              }}
+              initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{
                 opacity: 0,
-                x: swipeDirection === "like" ? 200 : -200,
-                rotate: swipeDirection === "like" ? 10 : -10,
+                y: swipeDirection === "like" ? 300 : -300,
+                rotate: swipeDirection === "like" ? 8 : -8,
               }}
               transition={{ duration: 0.25 }}
-              className="space-y-4"
+              className="space-y-4 cursor-grab active:cursor-grabbing"
             >
               <h2 className="text-xl font-bold">
                 {movie.title}
@@ -568,14 +583,18 @@ if (currentIndex >= movies.length) {
                   Your partner disconnected. Waiting…
                 </div>
               )}
-
               <img
                 src={movie.poster_url}
-                className="rounded-xl mx-auto"
+                className="rounded-xl mx-auto select-none"
+                draggable={false}
               />
 
               <p className="text-sm text-gray-600">
                 {movie.overview}
+              </p>
+
+              <p className="text-xs text-gray-400">
+                ⬇️ Swipe down to like · ⬆️ Swipe up to dislike
               </p>
             </motion.div>
           </AnimatePresence>
@@ -606,5 +625,3 @@ if (currentIndex >= movies.length) {
     </div>
   );
 }
-
-
