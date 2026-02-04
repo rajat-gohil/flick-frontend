@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiRequest } from "../lib/api";
 import { trackEvent } from "../lib/analytics";
@@ -47,7 +47,8 @@ export default function SessionPage() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [moviesLoaded, setMoviesLoaded] = useState(false);
-
+  const [summaryLoaded, setSummaryLoaded] = useState(false);
+  
   const [showMatch, setShowMatch] = useState(false);
   const [matchedMovie, setMatchedMovie] = useState<Movie | null>(null);
 
@@ -57,6 +58,37 @@ export default function SessionPage() {
   const [error, setError] = useState("");
 
   const [sessionLocked, setSessionLocked] = useState(false);
+
+/* ============================
+   LOAD MATCH HISTORY
+============================ */
+
+  const loadMatchHistory = useCallback(async () => {
+    try {
+      setLoadingMatches(true);
+
+      const data = await apiRequest(
+        `/api/matches/?session_id=${id}`
+      );
+
+      if (Array.isArray(data.matches)) {
+        const filtered = data.matches.filter(
+          (m: Match) => m.session_id === Number(id)
+        );
+        setMatches(filtered);
+      } else {
+        setMatches([]);
+      }
+    } catch {
+      setMatches([]);
+    } finally {
+      setLoadingMatches(false);
+    }
+  }, [id]);
+
+
+
+
 
   /* ============================
      WEBSOCKET (MATCH SYNC)
@@ -117,6 +149,14 @@ export default function SessionPage() {
         const data = await apiRequest(`/api/sessions/${id}/`);
         const s: Session = data.session;
         setSession(s);
+        if (s.ended && !summaryLoaded) {
+          loadMatchHistory();
+          setSummaryLoaded(true);
+          trackEvent("session_summary_loaded", {
+            session_id: s.id,
+          });
+        }
+
 
         // Load recommendations ONCE after both users join
         if (
@@ -144,34 +184,8 @@ export default function SessionPage() {
     pollSession();
     const intervalId = window.setInterval(pollSession, 3000);
     return () => clearInterval(intervalId);
-  }, [id, moviesLoaded]);
+  }, [id, moviesLoaded, summaryLoaded, loadMatchHistory]);
 
-  /* ============================
-     LOAD MATCH HISTORY
-  ============================ */
-
-  async function loadMatchHistory() {
-    try {
-      setLoadingMatches(true);
-
-      const data = await apiRequest(
-        `/api/matches/?session_id=${id}`
-      );
-
-      if (Array.isArray(data.matches)) {
-        const filtered = data.matches.filter(
-          (m: Match) => m.session_id === Number(id)
-        );
-        setMatches(filtered);
-      } else {
-        setMatches([]);
-      }
-    } catch {
-      setMatches([]);
-    } finally {
-      setLoadingMatches(false);
-    }
-  }
 
   /* ============================
      SWIPE HANDLER
@@ -255,19 +269,30 @@ export default function SessionPage() {
   if (session.ended) {
     return (
       <div className="mx-auto mt-24 max-w-md px-6 space-y-6 text-center">
-        <h1 className="text-2xl font-bold">
-          This session has ended
-        </h1>
+          <h1 className="text-2xl font-bold">
+            Session Summary
+          </h1>
 
-        <p className="text-sm text-gray-600">
-          Your partner ended the session.
-        </p>
+          <p className="text-sm text-gray-600">
+            This session has ended.
+          </p>
+
+          <div className="mt-4 rounded-xl border p-4 space-y-1 text-sm">
+            <p>
+              <span className="font-semibold">Movies swiped:</span>{" "}
+              {movies.length}
+            </p>
+            <p>
+              <span className="font-semibold">Matches:</span>{" "}
+              {matches.length}
+            </p>
+          </div>
 
         <button
           onClick={loadMatchHistory}
           className="w-full rounded-xl border py-3 font-bold"
         >
-          View Matches
+          View Matches Again
         </button>
 
         {loadingMatches && <p>Loading matches…</p>}
@@ -277,7 +302,7 @@ export default function SessionPage() {
             No matches in this session
           </p>
         )}
-
+        
         {!loadingMatches &&
           matches.map((m, index) => (
             <div
@@ -304,6 +329,15 @@ export default function SessionPage() {
               </p>
             </div>
           ))}
+          <button
+            onClick={() => {
+              trackEvent("start_new_session_clicked");
+              navigate("/");
+            }}
+            className="w-full rounded-xl bg-green-600 py-3 text-white font-bold"
+          >
+            Start New Session
+          </button> 
 
         <button
           onClick={() => navigate("/")}
