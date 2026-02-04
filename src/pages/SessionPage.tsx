@@ -136,9 +136,12 @@ export default function SessionPage() {
         setPartnerStatus("swiping");
 
         setTimeout(() => {
-          setPartnerStatus("online");
+          setPartnerStatus((prev) =>
+            prev === "swiping" ? "online" : prev
+          );
         }, 1500);
       }
+
       if (data.type === "presence") {
         if (data.user_id !== undefined) {
           setPartnerStatus(data.status);
@@ -146,14 +149,15 @@ export default function SessionPage() {
       }
     
       if (data.type === "match_event") {
-        setMatchedMovie({
-          id: data.movie_id,
-          title: data.movie_title,
-          overview: "",
-          poster_url: "",
-        });
+        setShowMatch((prev) => {
+          if (prev) return prev;
 
-          setShowMatch(true);
+          setMatchedMovie({
+            id: data.movie_id,
+            title: data.movie_title,
+            overview: "",
+            poster_url: "",
+          });
 
           // 🎉 Confetti side-effect (outside state setters)
           confetti({
@@ -167,12 +171,18 @@ export default function SessionPage() {
             movie_id: data.movie_id,
             source: "websocket",
           });
-        }
+
+          return true;
+        });
+      }
+
 
 
       /* SESSION ENDED BROADCAST (BOTH USERS) */
       if (data.type === "session_ended") {
         setSessionLocked(true);
+        setPartnerStatus("offline");
+
         setSession((prev) =>
           prev ? { ...prev, ended: true } : prev
         );
@@ -255,7 +265,7 @@ export default function SessionPage() {
   ) {
     if (!session) return;
 
-    if (session.ended || sessionLocked) {
+    if (session.ended || sessionLocked || showMatch) {
       return;
     }
 
