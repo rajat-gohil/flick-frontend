@@ -95,46 +95,64 @@ export default function SessionPage() {
   ============================ */
 
   useEffect(() => {
-    if (!id) return;
-      console.log("WS HOST:", import.meta.env.VITE_BACKEND_HOST);
-    const protocol =
-      window.location.protocol === "https:" ? "wss" : "ws";
+  if (!id) return;
 
-    const backendHost =
-      import.meta.env.VITE_BACKEND_HOST ||
-      window.location.hostname;
+  const protocol =
+    window.location.protocol === "https:" ? "wss" : "ws";
 
-    const wsUrl = `${protocol}://${backendHost}/ws/session/${id}/`;
+  const backendHost =
+    import.meta.env.VITE_BACKEND_HOST ||
+    window.location.hostname;
 
-    const socket = new WebSocket(wsUrl);
-    console.log("WS URL:", wsUrl);
-    socket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
+  const wsUrl = `${protocol}://${backendHost}/ws/session/${id}/`;
+  const socket = new WebSocket(wsUrl);
 
-        if (data.type === "match_event") {
-          setMatchedMovie({
-            id: data.movie_id,
-            title: data.movie_title,
-            overview: "",
-            poster_url: "",
-          });
+  socket.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
 
-          setShowMatch(true);
-        }
-      } catch {
-        // ignore malformed events
+      /* MATCH BROADCAST (BOTH USERS) */
+      if (data.type === "match_event") {
+        setMatchedMovie({
+          id: data.movie_id,
+          title: data.movie_title,
+          overview: "",
+          poster_url: "",
+        });
+
+        setShowMatch(true);
+
+        trackEvent("match_popup_shown", {
+          session_id: Number(id),
+          movie_id: data.movie_id,
+          source: "websocket",
+        });
       }
-    };
 
-    socket.onerror = () => {
-      // silent failure; polling remains fallback
-    };
+      /* SESSION ENDED BROADCAST (BOTH USERS) */
+      if (data.type === "session_ended") {
+        setSessionLocked(true);
+        setSession((prev) =>
+          prev ? { ...prev, ended: true } : prev
+        );
 
-    return () => {
-      socket.close();
-    };
-  }, [id]);
+        trackEvent("session_ended_ws", {
+          session_id: Number(id),
+        });
+      }
+    } catch {
+      // ignore malformed events
+    }
+  };
+
+  socket.onerror = () => {
+    // silent fallback to polling
+  };
+
+  return () => {
+    socket.close();
+  };
+}, [id]);
 
 
   /* ============================
@@ -265,7 +283,8 @@ export default function SessionPage() {
 
   if (session.ended) {
     return (
-      <div className="mx-auto mt-24 max-w-md px-6 space-y-6 text-center">
+      <div className="mx-auto mt-24 max-w-md px-6 space-y-6 text-center
+                animate-in fade-in zoom-in duration-300">
           <h1 className="text-2xl font-bold">
             Session Summary
           </h1>
@@ -374,7 +393,8 @@ export default function SessionPage() {
 
   if (showMatch && matchedMovie) {
     return (
-      <div className="mx-auto mt-24 max-w-md px-6 space-y-6 text-center">
+      <div className="mx-auto mt-24 max-w-md px-6 space-y-6 text-center
+                animate-in fade-in zoom-in duration-300">
         <h1 className="text-3xl font-bold text-green-600">
           It’s a Match! 🎉
         </h1>
