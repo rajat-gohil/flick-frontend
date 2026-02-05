@@ -14,7 +14,6 @@ type Movie = {
   title: string;
   overview: string;
   poster_url: string;
-  streaming_providers?: Record<string, string[]>;
 };
 
 type Match = {
