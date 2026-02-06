@@ -68,6 +68,7 @@ export default function SessionPage() {
   const [partnerStatus, setPartnerStatus] =
   useState<"online" | "offline" | "swiping">("online");
   const [industrySubmitting, setIndustrySubmitting] = useState(false);
+  const [swipeCount, setSwipeCount] = useState(0);
 
 
 
@@ -220,7 +221,10 @@ export default function SessionPage() {
       try {
         const data = await apiRequest(`/api/sessions/${id}/`);
         const s: Session = data.session;
-        setSession(s);      
+        setSession(s);
+        if (s.industry) {
+          setIndustrySubmitting(false);
+        }      
         if (s.ended && !summaryLoaded) {
           loadMatchHistory();
           setSummaryLoaded(true);
@@ -290,11 +294,12 @@ export default function SessionPage() {
         reaction === "like" ? "swipe_like" : "swipe_dislike",
         { movie_id: movie.id }
       );
+    
+    setSwipeCount((prev) => prev + 1);
 
 // Do nothing here.
 // Match popup will be triggered via WebSocket for BOTH users
 
-      setCurrentIndex((prev) => prev + 1);
       setSwipeDirection(null);
 
 
@@ -335,6 +340,74 @@ export default function SessionPage() {
   }
 
   /* ============================
+   INDUSTRY SELECTION
+============================ */
+
+if (session.host_joined && session.guest_joined && !session.industry) {
+  return (
+    <div className="mx-auto mt-24 max-w-md px-6 text-center space-y-6">
+      <h1 className="text-2xl font-bold">
+        What are you in the mood for?
+      </h1>
+
+      <p className="text-sm text-gray-600">
+        Choose one to start matching
+      </p>
+
+      <button
+        disabled={industrySubmitting}
+          onClick={async () => {
+            if (industrySubmitting) return;
+
+            setIndustrySubmitting(true);
+            try {
+              await apiRequest("/api/sessions/industry/", {
+                method: "POST",
+                body: JSON.stringify({
+                  session_id: Number(id),
+                  industry: "bollywood",
+                }),
+              });
+            } catch {
+              setIndustrySubmitting(false);
+              setError("Failed to select industry");
+            }
+          }}
+
+        className="w-full rounded-xl bg-black py-3 text-white font-bold"
+      >
+        🎬 Bollywood
+      </button>
+
+      <button
+        disabled={industrySubmitting}
+          onClick={async () => {
+            if (industrySubmitting) return;
+
+            setIndustrySubmitting(true);
+            try {
+              await apiRequest("/api/sessions/industry/", {
+                method: "POST",
+                body: JSON.stringify({
+                  session_id: Number(id),
+                  industry: "hollywood",
+                }),
+              });
+            } catch {
+              setIndustrySubmitting(false);
+              setError("Failed to select industry");
+            }
+          }}
+
+        className="w-full rounded-xl border py-3 font-bold"
+      >
+        🎥 Hollywood
+      </button>
+    </div>
+  );
+}
+
+  /* ============================
      SESSION ENDED
   ============================ */
 
@@ -353,7 +426,7 @@ export default function SessionPage() {
           <div className="mt-4 rounded-xl border p-4 space-y-1 text-sm">
             <p>
               <span className="font-semibold">Movies swiped:</span>{" "}
-              {currentIndex}
+              {swipeCount}
             </p>
             <p>
               <span className="font-semibold">Matches:</span>{" "}
@@ -427,59 +500,6 @@ export default function SessionPage() {
       </div>
     );
   }
-
-/* ============================
-   INDUSTRY SELECTION
-============================ */
-
-if (session.host_joined && session.guest_joined && !session.industry) {
-  return (
-    <div className="mx-auto mt-24 max-w-md px-6 text-center space-y-6">
-      <h1 className="text-2xl font-bold">
-        What are you in the mood for?
-      </h1>
-
-      <p className="text-sm text-gray-600">
-        Choose one to start matching
-      </p>
-
-      <button
-        disabled={industrySubmitting}
-        onClick={async () => {
-          setIndustrySubmitting(true);
-          await apiRequest("/api/sessions/industry/", {
-            method: "POST",
-            body: JSON.stringify({
-              session_id: Number(id),
-              industry: "bollywood",
-            }),
-          });
-        }}
-        className="w-full rounded-xl bg-black py-3 text-white font-bold"
-      >
-        🎬 Bollywood
-      </button>
-
-      <button
-        disabled={industrySubmitting}
-        onClick={async () => {
-          setIndustrySubmitting(true);
-          await apiRequest("/api/sessions/industry/", {
-            method: "POST",
-            body: JSON.stringify({
-              session_id: Number(id),
-              industry: "hollywood",
-            }),
-          });
-        }}
-        className="w-full rounded-xl border py-3 font-bold"
-      >
-        🎥 Hollywood
-      </button>
-    </div>
-  );
-}
-
 
   /* ============================
      WAITING ROOM
