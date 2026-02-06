@@ -28,6 +28,8 @@ export default function CreateSessionPage() {
 
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [sessionCode, setSessionCode] = useState<string | null>(null);
+  const [industry, setIndustry] = useState<"bollywood" | "hollywood" | null>(null);
+
   
   
   const [error, setError] = useState("");
@@ -36,18 +38,23 @@ export default function CreateSessionPage() {
      LOAD GENRES
   ============================ */
 
-  useEffect(() => {
-    async function loadGenres() {
-      try {
-        const data = await apiRequest("/api/genres/");
-        setGenres(Array.isArray(data.genres) ? data.genres : []);
-      } catch {
-        setError("Failed to load genres");
-      }
-    }
+    useEffect(() => {
+      if (!industry) return;
 
-    loadGenres();
-  }, []);
+      async function loadGenres() {
+        try {
+          const data = await apiRequest(
+            `/api/genres/?industry=${industry}`
+          );
+          setGenres(Array.isArray(data.genres) ? data.genres : []);
+        } catch {
+          setError("Failed to load genres");
+        }
+      }
+
+      loadGenres();
+    }, [industry]);
+
 
   /* ============================
      CREATE SESSION
@@ -89,13 +96,39 @@ export default function CreateSessionPage() {
   /* ============================
      RENDER
   ============================ */
+
   const inviteLink =
   sessionCode
     ? `${window.location.origin}/join/${sessionCode}`
     : "";
-  
+
+
   return (
     <div className="mx-auto mt-24 max-w-md px-6 space-y-6">
+            {!industry && (
+              <div className="space-y-4">
+                <p className="text-center text-sm text-gray-600">
+                  Choose an industry
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => setIndustry("bollywood")}
+                  className="w-full rounded-xl bg-black py-3 font-bold text-white"
+                >
+                  🎬 Bollywood
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIndustry("hollywood")}
+                  className="w-full rounded-xl border py-3 font-bold"
+                >
+                  🎥 Hollywood
+                </button>
+              </div>
+            )}
+
       <h1 className="text-2xl font-bold text-center">
         Create Session
       </h1>
@@ -160,24 +193,25 @@ export default function CreateSessionPage() {
           onSubmit={handleSubmit}
           className="space-y-4"
         >
-          <div className="space-y-2">
-            {genres.map((genre) => (
-              <button
-                key={genre.id}
-                type="button"
-                onClick={() =>
-                  setSelectedGenreId(genre.id)
-                }
-                className={`w-full rounded-lg border px-4 py-2 text-left ${
-                  selectedGenreId === genre.id
-                    ? "border-black font-bold"
-                    : "border-gray-300"
-                }`}
-              >
-                {genre.name}
-              </button>
-            ))}
-          </div>
+          {industry && (
+            <div className="space-y-2">
+              {genres.map((genre) => (
+                <button
+                  key={genre.id}
+                  type="button"
+                  onClick={() => setSelectedGenreId(genre.id)}
+                  className={`w-full rounded-lg border px-4 py-2 text-left ${
+                    selectedGenreId === genre.id
+                      ? "border-black font-bold"
+                      : "border-gray-300"
+                  }`}
+                >
+                  {genre.name}
+                </button>
+              ))}
+            </div>
+          )}
+
 
           <button
             type="submit"
