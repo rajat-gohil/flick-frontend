@@ -69,14 +69,6 @@ export default function SessionPage() {
   useState<"online" | "offline" | "swiping">("online");
   const [industrySubmitting, setIndustrySubmitting] = useState(false);
   const [swipeCount, setSwipeCount] = useState(0);
-  const [genres, setGenres] = useState<{ id: number; name: string }[]>([]);
-  const [selectedGenreId, setSelectedGenreId] = useState<number | null>(null);
-  const [genreSubmitting, setGenreSubmitting] = useState(false);
-  
-
-
-
-
 
 
 /* ============================
@@ -226,17 +218,6 @@ export default function SessionPage() {
         const data = await apiRequest(`/api/sessions/${id}/`);
         const s: Session = data.session;
         setSession(s);
-        if (s.industry && genres.length === 0) {
-          try {
-            const res = await apiRequest(
-              `/api/genres/?industry=${s.industry}`
-            );
-            setGenres(res.genres || []);
-          } catch {
-            setGenres([]);
-          }
-        }
-
         if (s.industry) {
           setIndustrySubmitting(false);
         }      
@@ -276,7 +257,7 @@ export default function SessionPage() {
     pollSession();
     const intervalId = window.setInterval(pollSession, 3000);
     return () => clearInterval(intervalId);
-  }, [id, moviesLoaded, summaryLoaded, loadMatchHistory, genres.length]);
+  }, [id, moviesLoaded, summaryLoaded, loadMatchHistory]);
 
 
   /* ============================
@@ -631,55 +612,6 @@ if (currentIndex >= movies.length) {
     </div>
   );
 }
-
-  if (
-    session.host_joined &&
-    session.guest_joined &&
-    session.industry &&
-    !selectedGenreId
-  ) {
-    return (
-      <div className="mx-auto mt-24 max-w-md px-6 text-center space-y-4">
-        <h1 className="text-2xl font-bold">
-          Pick a genre
-        </h1>
-
-        {genres.length === 0 && (
-          <p className="text-sm text-gray-500">
-            Loading genres…
-          </p>
-        )}
-
-        {genres.map((g) => (
-          <button
-            key={g.id}
-            disabled={genreSubmitting}
-            onClick={async () => {
-              setGenreSubmitting(true);
-              try {
-                await apiRequest("/api/sessions/genre/", {
-                  method: "POST",
-                  body: JSON.stringify({
-                    session_id: Number(id),
-                    genre_id: g.id,
-                  }),
-                });
-                setSelectedGenreId(g.id);
-              } catch {
-                setGenreSubmitting(false);
-                setError("Failed to select genre");
-              }
-            }}
-            className="w-full rounded-xl border py-3 font-bold"
-          >
-            {g.name}
-          </button>
-        ))}
-      </div>
-    );
-  }
-
-
 
 
   /* ============================
