@@ -41,9 +41,9 @@ export default function CreateSessionPage() {
     setIsLoading(true);
     setError("");
     try {
-    const data = await apiRequest(
-      `/genres/?industry=${industry}` // ← CHANGED: Remove "/api/"
-    );
+      const data = await apiRequest(
+        `/api/genres/?industry=${industry}`  // CHANGED FROM `/genres/?industry=${industry}`
+      );
       setGenres(Array.isArray(data.genres) ? data.genres : []);
       setSelectedGenreId(null); // Reset selection when industry changes
     } catch {
@@ -89,18 +89,17 @@ async function handleSubmit(
       }
     );
 
-    // CHANGE 2: Remove "/api/" prefix to match the first call
-    await apiRequest(
-      "/sessions/set-genre/", // ← CHANGED FROM "/api/sessions/set-genre/"
-      {
-        method: "POST",
-        body: JSON.stringify({
-          genre_id: selectedGenreId,
-          industry: industry,
-          session_id: sessionData.id, // ← Keep this
-        }),
-      }
-    );
+      await apiRequest(
+        "/api/sessions/genre/",  // CHANGED FROM "/sessions/set-genre/"
+        {
+          method: "POST",
+          body: JSON.stringify({
+            genre_id: selectedGenreId,
+            industry: industry,
+            session_id: sessionData.id,
+          }),
+        }
+      );
 
     trackEvent("session_created", {
       genre_id: selectedGenreId,
@@ -160,7 +159,7 @@ async function handleSubmit(
               className="w-full rounded-xl bg-black py-3 font-bold text-white hover:bg-gray-800 transition-colors"
               disabled={isLoading}
             >
-              🎬 Bollywood
+              🎬 Indian Movies  // CHANGED FROM "Bollywood"
             </button>
 
             <button
