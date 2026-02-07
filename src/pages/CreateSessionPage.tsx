@@ -82,7 +82,7 @@ async function handleSubmit(
   try {
     // CHANGE 1: Keep consistent with your backend URLs
     const sessionData = await apiRequest(
-      "/sessions/create/", // ← Already correct
+      "/api/sessions/create/", // ← Already correct
       {
         method: "POST",
         body: JSON.stringify({}),
@@ -159,7 +159,7 @@ async function handleSubmit(
               className="w-full rounded-xl bg-black py-3 font-bold text-white hover:bg-gray-800 transition-colors"
               disabled={isLoading}
             >
-              🎬 Indian Movies  // CHANGED FROM "Bollywood"
+              🎬 Indian Movies
             </button>
 
             <button
