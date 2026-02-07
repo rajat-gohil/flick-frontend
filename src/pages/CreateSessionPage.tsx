@@ -41,9 +41,9 @@ export default function CreateSessionPage() {
     setIsLoading(true);
     setError("");
     try {
-      const data = await apiRequest(
-        `/genres/?industry=${industry}` // ← CHANGED: Remove "/api/"
-      );
+    const data = await apiRequest(
+      `/genres/?industry=${industry}` // ← CHANGED: Remove "/api/"
+    );
       setGenres(Array.isArray(data.genres) ? data.genres : []);
       setSelectedGenreId(null); // Reset selection when industry changes
     } catch {
