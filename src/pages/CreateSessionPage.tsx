@@ -59,51 +59,61 @@ export default function CreateSessionPage() {
   }, [loadGenres]);
 
   /* ============================
-     CREATE SESSION
-  ============================ */
+   CREATE SESSION
+============================ */
 
-  async function handleSubmit(
-    e: React.FormEvent<HTMLFormElement>
-  ) {
-    e.preventDefault();
-    setError("");
+async function handleSubmit(
+  e: React.FormEvent<HTMLFormElement>
+) {
+  e.preventDefault();
+  setError("");
 
-    if (selectedGenreId === null) {
-      setError("Please select a genre");
-      return;
-    }
-
-    if (!industry) {
-      setError("Please select an industry first");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const data = await apiRequest(
-        "/api/sessions/create/",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            genre_id: selectedGenreId,
-          }),
-        }
-      );
-
-      trackEvent("session_created", {
-        genre_id: selectedGenreId,
-        industry: industry,
-      });
-
-      setSessionId(data.session_id);
-      setSessionCode(data.code);
-    } catch {
-      setError("Failed to create session");
-    } finally {
-      setIsLoading(false);
-    }
+  if (selectedGenreId === null) {
+    setError("Please select a genre");
+    return;
   }
 
+  if (!industry) {
+    setError("Please select an industry first");
+    return;
+  }
+
+  setIsLoading(true);
+  try {
+    // CHANGE 1: Create session WITHOUT genre_id
+    const sessionData = await apiRequest(
+      "/api/sessions/create/",
+      {
+        method: "POST",
+        body: JSON.stringify({}), // ← EMPTY OBJECT, NO genre_id
+      }
+    );
+
+    // CHANGE 2: Now set genre on the created session
+    await apiRequest(
+      `/api/sessions/${sessionData.id}/genre/`, // or POST /api/sessions/genre/
+      {
+        method: "POST",
+        body: JSON.stringify({
+          genre_id: selectedGenreId,
+          industry: industry, // ← Also send industry per your API spec
+        }),
+      }
+    );
+
+    trackEvent("session_created", {
+      genre_id: selectedGenreId,
+      industry: industry,
+    });
+
+    setSessionId(sessionData.id);
+    setSessionCode(sessionData.code);
+  } catch {
+    setError("Failed to create session");
+  } finally {
+    setIsLoading(false);
+  }
+}
   /* ============================
      RENDER
   ============================ */
