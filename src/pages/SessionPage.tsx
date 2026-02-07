@@ -29,7 +29,6 @@ type Session = {
   host_joined: boolean;
   guest_joined: boolean;
   ended: boolean;
-  industry?: "bollywood" | "hollywood" | null;
 };
 
 
@@ -67,7 +66,6 @@ export default function SessionPage() {
   const SWIPE_THRESHOLD = 120;
   const [partnerStatus, setPartnerStatus] =
   useState<"online" | "offline" | "swiping">("online");
-  const [industrySubmitting, setIndustrySubmitting] = useState(false);
   const [swipeCount, setSwipeCount] = useState(0);
 
 
@@ -217,10 +215,7 @@ export default function SessionPage() {
       try {
         const data = await apiRequest(`/api/sessions/${id}/`);
         const s: Session = data.session;
-        setSession(s);
-        if (s.industry) {
-          setIndustrySubmitting(false);
-        }      
+        setSession(s);   
         if (s.ended && !summaryLoaded) {
           loadMatchHistory();
           setSummaryLoaded(true);
@@ -234,7 +229,6 @@ export default function SessionPage() {
         if (
           s.host_joined &&
           s.guest_joined &&
-          s.industry &&
           !moviesLoaded
         ) {
           const recos = await apiRequest(
@@ -336,74 +330,6 @@ export default function SessionPage() {
   }
 
   /* ============================
-   INDUSTRY SELECTION
-============================ */
-
-if (session.host_joined && session.guest_joined && !session.industry) {
-  return (
-    <div className="mx-auto mt-24 max-w-md px-6 text-center space-y-6">
-      <h1 className="text-2xl font-bold">
-        What are you in the mood for?
-      </h1>
-
-      <p className="text-sm text-gray-600">
-        Choose one to start matching
-      </p>
-
-      <button
-        disabled={industrySubmitting}
-          onClick={async () => {
-            if (industrySubmitting) return;
-
-            setIndustrySubmitting(true);
-            try {
-              await apiRequest("/api/sessions/industry/", {
-                method: "POST",
-                body: JSON.stringify({
-                  session_id: Number(id),
-                  industry: "bollywood",
-                }),
-              });
-            } catch {
-              setIndustrySubmitting(false);
-              setError("Failed to select industry");
-            }
-          }}
-
-        className="w-full rounded-xl bg-black py-3 text-white font-bold"
-      >
-        🎬 Bollywood
-      </button>
-
-      <button
-        disabled={industrySubmitting}
-          onClick={async () => {
-            if (industrySubmitting) return;
-
-            setIndustrySubmitting(true);
-            try {
-              await apiRequest("/api/sessions/industry/", {
-                method: "POST",
-                body: JSON.stringify({
-                  session_id: Number(id),
-                  industry: "hollywood",
-                }),
-              });
-            } catch {
-              setIndustrySubmitting(false);
-              setError("Failed to select industry");
-            }
-          }}
-
-        className="w-full rounded-xl border py-3 font-bold"
-      >
-        🎥 Hollywood
-      </button>
-    </div>
-  );
-}
-
-  /* ============================
      SESSION ENDED
   ============================ */
 
@@ -451,12 +377,6 @@ if (session.host_joined && session.guest_joined && !session.industry) {
               key={`${m.movie_id}-${index}`}
               className="border rounded-xl p-4 space-y-2"
             >
-              {partnerStatus && (
-                <p className="text-xs text-gray-500 animate-pulse">
-                  Your partner is swiping…
-                </p>
-              )}
-
               <h2 className="font-bold">
                 {m.movie_title}
               </h2>
