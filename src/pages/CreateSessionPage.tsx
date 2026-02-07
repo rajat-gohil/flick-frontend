@@ -42,7 +42,7 @@ export default function CreateSessionPage() {
     setError("");
     try {
       const data = await apiRequest(
-        `/api/genres/?industry=${industry}`
+        `/genres/?industry=${industry}` // ← CHANGED: Remove "/api/"
       );
       setGenres(Array.isArray(data.genres) ? data.genres : []);
       setSelectedGenreId(null); // Reset selection when industry changes
@@ -58,7 +58,7 @@ export default function CreateSessionPage() {
     loadGenres();
   }, [loadGenres]);
 
-  /* ============================
+/* ============================
    CREATE SESSION
 ============================ */
 
@@ -80,23 +80,24 @@ async function handleSubmit(
 
   setIsLoading(true);
   try {
-    // CHANGE 1: Create session WITHOUT genre_id
+    // CHANGE 1: Keep consistent with your backend URLs
     const sessionData = await apiRequest(
-      "/api/sessions/create/",
+      "/sessions/create/", // ← Already correct
       {
         method: "POST",
-        body: JSON.stringify({}), // ← EMPTY OBJECT, NO genre_id
+        body: JSON.stringify({}),
       }
     );
 
-    // CHANGE 2: Now set genre on the created session
+    // CHANGE 2: Remove "/api/" prefix to match the first call
     await apiRequest(
-      `/api/sessions/${sessionData.id}/genre/`, // or POST /api/sessions/genre/
+      "/sessions/set-genre/", // ← CHANGED FROM "/api/sessions/set-genre/"
       {
         method: "POST",
         body: JSON.stringify({
           genre_id: selectedGenreId,
-          industry: industry, // ← Also send industry per your API spec
+          industry: industry,
+          session_id: sessionData.id, // ← Keep this
         }),
       }
     );
@@ -108,12 +109,14 @@ async function handleSubmit(
 
     setSessionId(sessionData.id);
     setSessionCode(sessionData.code);
-  } catch {
-    setError("Failed to create session");
+  } catch (error) {
+    console.error("Session creation failed:", error);
+    setError("Failed to create session. Please try again.");
   } finally {
     setIsLoading(false);
   }
 }
+
   /* ============================
      RENDER
   ============================ */
