@@ -89,17 +89,14 @@ async function handleSubmit(
       }
     );
 
-      await apiRequest(
-        "/api/sessions/genre/",  // CHANGED FROM "/sessions/set-genre/"
-        {
-          method: "POST",
-          body: JSON.stringify({
-            genre_id: selectedGenreId,
-            industry: industry,
-            session_id: sessionData.id,
-          }),
-        }
-      );
+    await apiRequest("/api/sessions/genre/", {
+      method: "POST",
+      body: JSON.stringify({
+        genre_id: selectedGenreId,
+        session_id: sessionData.id,
+      }),
+    });
+
 
     trackEvent("session_created", {
       genre_id: selectedGenreId,
