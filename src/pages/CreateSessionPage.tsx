@@ -94,6 +94,7 @@ async function handleSubmit(
       body: JSON.stringify({
         genre_id: selectedGenreId,
         session_id: sessionData.id,
+        industry: industry,
       }),
     });
 

@@ -242,6 +242,7 @@ export default function SessionPage() {
 
         setMovies(Array.isArray(recos.movies) ? recos.movies : []);
         setCurrentIndex(0);
+        setMoviesLoaded(true);
 
         trackEvent("movies_loaded", {
           count: recos.movies?.length || 0,
@@ -251,6 +252,7 @@ export default function SessionPage() {
 
       } catch {
         setError("Failed to load session");
+        recommendationsFetchedRef.current = false;
       }
     }
 
@@ -551,7 +553,7 @@ if (currentIndex >= movies.length) {
 
   return (
         <div className="mx-auto mt-12 max-w-md px-6 space-y-4 text-center">
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center mb-2">
         <div className="text-xs text-gray-500 mb-2">
           {partnerStatus === "online" && "🟢 Partner online"}
           {partnerStatus === "swiping" && "✋ Partner is swiping…"}
