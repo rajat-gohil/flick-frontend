@@ -29,6 +29,7 @@ type Session = {
   host_joined: boolean;
   guest_joined: boolean;
   ended: boolean;
+  preferences_set: boolean;
 };
 
 
@@ -225,6 +226,11 @@ export default function SessionPage() {
           });
         }
 
+      // ✅ NEW: Redirect to preferences if both joined but prefs not set
+      if (s.host_joined && s.guest_joined && !s.preferences_set) {
+        navigate(`/session/${id}/preferences`);
+        return;
+      }
 
         // Load recommendations ONCE after both users join
       if (moviesLoaded) return;
@@ -232,6 +238,7 @@ export default function SessionPage() {
       if (
         s.host_joined &&
         s.guest_joined &&
+        s.preferences_set &&
         !recommendationsFetchedRef.current
       ) {
         recommendationsFetchedRef.current = true;
@@ -259,7 +266,7 @@ export default function SessionPage() {
     pollSession();
     const intervalId = window.setInterval(pollSession, 3000);
     return () => clearInterval(intervalId);
-  }, [id, moviesLoaded, summaryLoaded, loadMatchHistory]);
+  }, [id, moviesLoaded, summaryLoaded, loadMatchHistory, navigate]);
 
 
   /* ============================

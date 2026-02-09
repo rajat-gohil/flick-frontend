@@ -6,6 +6,7 @@ import RegisterPage from "../pages/RegisterPage";
 import CreateSessionPage from "../pages/CreateSessionPage";
 import JoinSessionPage from "../pages/JoinSessionPage";
 import SessionPage from "../pages/SessionPage";
+import PreferencesPage from "../pages/PreferencesPage";
 import RequireAuth from "../components/RequireAuth";
 import JoinViaLink from "../pages/JoinViaLink";
 import AutoJoin from "../pages/AutoJoin";
@@ -43,6 +44,15 @@ export default function AppRouter() {
           element={
             <RequireAuth>
               <JoinSessionPage />
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/session/:id/preferences"
+          element={
+            <RequireAuth>
+              <PreferencesPage />
             </RequireAuth>
           }
         />
