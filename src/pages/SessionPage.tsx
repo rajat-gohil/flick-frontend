@@ -226,23 +226,27 @@ export default function SessionPage() {
 
 
         // Load recommendations ONCE after both users join
-        if (
-          s.host_joined &&
-          s.guest_joined &&
-          !moviesLoaded
-        ) {
-          const recos = await apiRequest(
-            `/api/recommendations/?session_id=${id}`
-          );
+      if (moviesLoaded) return;
 
-          setMovies(Array.isArray(recos.movies) ? recos.movies : []);
-          setCurrentIndex(0);
-          setMoviesLoaded(true);
+      if (
+        s.host_joined &&
+        s.guest_joined
+      ) {
+        const recos = await apiRequest(
+          `/api/recommendations/?session_id=${id}`
+        );
 
-          trackEvent("movies_loaded", {
-            count: recos.movies?.length || 0,
-          });
-        }
+        setMovies(Array.isArray(recos.movies) ? recos.movies : []);
+        setCurrentIndex(0);
+        setMoviesLoaded(true);
+
+        trackEvent("movies_loaded", {
+          count: recos.movies?.length || 0,
+        });
+      }
+
+
+
       } catch {
         setError("Failed to load session");
       }
