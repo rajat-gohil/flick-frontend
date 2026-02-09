@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiRequest } from "../lib/api";
 import { trackEvent } from "../lib/analytics";
@@ -67,6 +67,7 @@ export default function SessionPage() {
   const [partnerStatus, setPartnerStatus] =
   useState<"online" | "offline" | "swiping">("online");
   const [swipeCount, setSwipeCount] = useState(0);
+  const recommendationsFetchedRef = useRef(false);
 
 
 /* ============================
@@ -230,21 +231,22 @@ export default function SessionPage() {
 
       if (
         s.host_joined &&
-        s.guest_joined
+        s.guest_joined &&
+        !recommendationsFetchedRef.current
       ) {
+        recommendationsFetchedRef.current = true;
+
         const recos = await apiRequest(
           `/api/recommendations/?session_id=${id}`
         );
 
         setMovies(Array.isArray(recos.movies) ? recos.movies : []);
         setCurrentIndex(0);
-        setMoviesLoaded(true);
 
         trackEvent("movies_loaded", {
           count: recos.movies?.length || 0,
         });
       }
-
 
 
       } catch {
@@ -283,6 +285,7 @@ export default function SessionPage() {
           reaction,
         }),
       });
+      setCurrentIndex((prev) => prev + 1);
 
       trackEvent(
         reaction === "like" ? "swipe_like" : "swipe_dislike",
@@ -296,20 +299,21 @@ export default function SessionPage() {
 
       setSwipeDirection(null);
 
+} catch (err: any) {
+  // If already swiped this movie, skip it
+  if (err?.status === 409) {
+    setCurrentIndex((prev) => prev + 1);
+    setSwipeDirection(null);
+    return;
+  }
 
-    } catch (err: unknown) {
-      if (
-        typeof err === "object" &&
-        err !== null &&
-        "error" in err &&
-        (err as { error?: string }).error === "Session has ended"
-      ) {
-        // Silent ignore — UI will transition via polling / WS
-        return;
-      }
+  if (err?.data?.error === "Session has ended") {
+    return;
+  }
 
-      setError("Swipe failed");
-    }
+  setError("Swipe failed");
+}
+
 
   }
 
