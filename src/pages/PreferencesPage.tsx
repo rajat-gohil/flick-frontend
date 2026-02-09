@@ -108,7 +108,7 @@ export default function PreferencesPage() {
     setError("");
 
     try {
-      const response = await apiRequest("/api/sessions/preferences/", {
+      await apiRequest("/api/sessions/preferences/", {
         method: "POST",
         body: JSON.stringify({
           session_id: Number(id),

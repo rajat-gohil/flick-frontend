@@ -218,6 +218,13 @@ export default function SessionPage() {
         const data = await apiRequest(`/api/sessions/${id}/`);
         const s: Session = data.session;
         setSession(s);   
+
+      // ✅ NEW: Redirect to preferences if both joined but prefs not set
+      if (s.host_joined && s.guest_joined && !s.preferences_set) {
+        navigate(`/session/${id}/preferences`);
+        return;
+      }
+
         if (s.ended && !summaryLoaded) {
           loadMatchHistory();
           setSummaryLoaded(true);
@@ -226,11 +233,7 @@ export default function SessionPage() {
           });
         }
 
-      // ✅ NEW: Redirect to preferences if both joined but prefs not set
-      if (s.host_joined && s.guest_joined && !s.preferences_set) {
-        navigate(`/session/${id}/preferences`);
-        return;
-      }
+
 
         // Load recommendations ONCE after both users join
       if (moviesLoaded) return;
