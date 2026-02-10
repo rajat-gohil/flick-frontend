@@ -210,66 +210,74 @@ export default function SessionPage() {
      SESSION POLLING
   ============================ */
 
-  useEffect(() => {
-    if (!id) return;
+    useEffect(() => {
+      if (!id) return;
 
-    async function pollSession() {
-      try {
-        const data = await apiRequest(`/api/sessions/${id}/`);
-        const s: Session = data.session;
-        setSession(s);   
+      async function pollSession() {
+        try {
+          const data = await apiRequest(`/api/sessions/${id}/`);
+          const s: Session = data.session;
+          setSession(s);
+          
+          if (s.ended && !summaryLoaded) {
+            loadMatchHistory();
+            setSummaryLoaded(true);
+            trackEvent("session_summary_loaded", {
+              session_id: s.id,
+            });
+          }
 
-      // ✅ NEW: Redirect to preferences if both joined but prefs not set
-      if (s.host_joined && s.guest_joined && !s.preferences_set) {
-        navigate(`/session/${id}/preferences`);
-        return;
-      }
+          // ✅ FIX: Only redirect if BOTH joined AND prefs NOT set AND movies NOT loaded yet
+          if (
+            s.host_joined && 
+            s.guest_joined && 
+            !s.preferences_set && 
+            !moviesLoaded &&  // ✅ ADD THIS CHECK
+            !recommendationsFetchedRef.current  // ✅ ADD THIS CHECK
+          ) {
+            navigate(`/session/${id}/preferences`);
+            return;
+          }
 
-        if (s.ended && !summaryLoaded) {
-          loadMatchHistory();
-          setSummaryLoaded(true);
-          trackEvent("session_summary_loaded", {
-            session_id: s.id,
-          });
+          // Load recommendations ONCE after both users join AND prefs are set
+          if (moviesLoaded) return;
+
+          if (
+            s.host_joined &&
+            s.guest_joined &&
+            s.preferences_set &&
+            !recommendationsFetchedRef.current
+          ) {
+            recommendationsFetchedRef.current = true;
+
+            try {
+              const recos = await apiRequest(
+                `/api/recommendations/?session_id=${id}`
+              );
+
+              setMovies(Array.isArray(recos.movies) ? recos.movies : []);
+              setCurrentIndex(0);
+              setMoviesLoaded(true);
+
+              trackEvent("movies_loaded", {
+                count: recos.movies?.length || 0,
+              });
+            } catch (err) {
+              console.error("Failed to load recommendations:", err);
+              setError("Failed to load movies. Please refresh.");
+              recommendationsFetchedRef.current = false;
+            }
+          }
+
+        } catch {
+          setError("Failed to load session");
         }
-
-
-
-        // Load recommendations ONCE after both users join
-      if (moviesLoaded) return;
-
-      if (
-        s.host_joined &&
-        s.guest_joined &&
-        s.preferences_set &&
-        !recommendationsFetchedRef.current
-      ) {
-        recommendationsFetchedRef.current = true;
-
-        const recos = await apiRequest(
-          `/api/recommendations/?session_id=${id}`
-        );
-
-        setMovies(Array.isArray(recos.movies) ? recos.movies : []);
-        setCurrentIndex(0);
-        setMoviesLoaded(true);
-
-        trackEvent("movies_loaded", {
-          count: recos.movies?.length || 0,
-        });
       }
 
-
-      } catch {
-        setError("Failed to load session");
-        recommendationsFetchedRef.current = false;
-      }
-    }
-
-    pollSession();
-    const intervalId = window.setInterval(pollSession, 3000);
-    return () => clearInterval(intervalId);
-  }, [id, moviesLoaded, summaryLoaded, loadMatchHistory, navigate]);
+      pollSession();
+      const intervalId = window.setInterval(pollSession, 3000);
+      return () => clearInterval(intervalId);
+    }, [id, moviesLoaded, summaryLoaded, loadMatchHistory, navigate]);
 
 
   /* ============================

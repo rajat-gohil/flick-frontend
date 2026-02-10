@@ -37,6 +37,18 @@ const QUESTIONS = [
       { value: "realistic", label: "🎬 Realistic & grounded", emoji: "🎬" },
     ],
   },
+  // ✅ NEW QUESTION
+  {
+    id: "era",
+    question: "What era do you prefer?",
+    options: [
+      { value: "classic", label: "🎞️ Classic (Before 2000)", emoji: "🎞️" },
+      { value: "2000s", label: "📀 2000s Era", emoji: "📀" },
+      { value: "2010s", label: "📱 2010s Era", emoji: "📱" },
+      { value: "recent", label: "🆕 Recent (2020+)", emoji: "🆕" },
+      { value: "any", label: "🎬 Any era is fine", emoji: "🎬" },
+    ],
+  },
 ];
 
 /* ============================
@@ -103,32 +115,48 @@ export default function PreferencesPage() {
     }
   }
 
-  async function handleSubmit() {
-    setIsSubmitting(true);
-    setError("");
+    async function handleSubmit() {
+      setIsSubmitting(true);
+      setError("");
 
-    try {
-      await apiRequest("/api/sessions/preferences/", {
-        method: "POST",
-        body: JSON.stringify({
+      try {
+        const response = await apiRequest("/api/sessions/preferences/", {
+          method: "POST",
+          body: JSON.stringify({
+            session_id: Number(id),
+            preferences: answers,
+          }),
+        });
+
+        trackEvent("preferences_submitted", {
           session_id: Number(id),
-          preferences: answers,
-        }),
-      });
+          answers,
+        });
 
-      trackEvent("preferences_submitted", {
-        session_id: Number(id),
-        answers,
-      });
+        // ✅ NEW: Show overlap score if both ready
+        if (response.both_ready && response.overlap_score !== undefined) {
+          const score = response.overlap_score;
+          let message = "";
+          
+          if (score >= 60) {
+            message = `🎉 ${score}% match! You're very aligned!`;
+          } else if (score >= 30) {
+            message = `✨ ${score}% match. Some overlap!`;
+          } else {
+            message = `🤔 ${score}% match. Opposites attract?`;
+          }
+          
+          // Show alert or toast (you can replace with a nicer UI)
+          alert(message);
+        }
 
-      // Navigate to session page
-      navigate(`/session/${id}`);
-    } catch (err) {
-      console.error("Failed to submit preferences:", err);
-      setError("Failed to save preferences. Please try again.");
-      setIsSubmitting(false);
+        navigate(`/session/${id}`);
+      } catch (err) {
+        console.error("Failed to submit preferences:", err);
+        setError("Failed to save preferences. Please try again.");
+        setIsSubmitting(false);
+      }
     }
-  }
 
   /* ============================
      RENDER
