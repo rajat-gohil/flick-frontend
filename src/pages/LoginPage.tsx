@@ -7,6 +7,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // ✅ Added password visibility state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -16,11 +17,10 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // User can login with either email or username
       const data = await apiRequest("/api/auth/login/", {
         method: "POST",
         body: JSON.stringify({
-          username: email,  // This field accepts both email and username
+          username: email,
           password,
         }),
       });
@@ -28,7 +28,7 @@ export default function LoginPage() {
       localStorage.setItem("auth_token", data.token);
       navigate("/");
     } catch (err: unknown) {
-      let message = "Invalid credentials. You can login with your email or username.";
+      let message = "Invalid credentials";
 
       if (typeof err === "object" && err !== null) {
         const e = err as {
@@ -44,7 +44,6 @@ export default function LoginPage() {
       setLoading(false);
     }
   }
-
 
   return (
     <div className="mx-auto mt-24 w-full max-w-sm px-6 space-y-6">
@@ -68,20 +67,27 @@ export default function LoginPage() {
           />
         </div>
 
-        <div>
+        <div className="relative">
           <input
-            type="password"
+            type={showPassword ? "text" : "password"} // ✅ Toggle password visibility
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-12 focus:outline-none focus:ring-2 focus:ring-black"
             required
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)} // ✅ Toggle visibility
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500"
+          >
+            {showPassword ? "🙈" : "👁️"} {/* ✅ Eye icon toggle */}
+          </button>
         </div>
 
         <div className="text-center text-sm text-gray-600">
           <button 
-            type="button"
+            type="button" // ✅ Make sure it's type="button" to prevent form submission
             onClick={() => navigate("/forgot-password")}
             className="font-semibold text-black hover:underline"
           >
@@ -92,7 +98,7 @@ export default function LoginPage() {
         <div className="text-center text-sm text-gray-600">
           Don't have an account?{" "}
           <button 
-            type="button"
+            type="button" // ✅ Make sure it's type="button"
             onClick={() => navigate("/register")}
             className="font-semibold text-black hover:underline"
           >
