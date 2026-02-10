@@ -56,33 +56,43 @@ export default function RegisterPage() {
         }),
       });
 
+      console.log("Registration response:", registerResponse);
+
       if (registerResponse.success) {
+        console.log("Registration successful, attempting login...");
+        
         // AUTO LOGIN AFTER REGISTRATION
         const loginResponse = await apiRequest("/api/auth/login/", {
           method: "POST",
           body: JSON.stringify({
-            email: formData.email,
+            username: formData.email,  // Use email for login
             password: formData.password,
           }),
         });
 
+        console.log("Login response:", loginResponse);
+
         if (loginResponse.success) {
           // Store token
-          localStorage.setItem("token", loginResponse.token);
+          localStorage.setItem("auth_token", loginResponse.token);  // Use consistent key
           
           // Set user ID for username setup
           setUserId(loginResponse.user_id);
           setUsernameSuggestions(generateUsernameSuggestions(formData.email));
           setStep("username");
+        } else {
+          setError(loginResponse.error || "Login failed after registration");
         }
+      } else {
+        setError(registerResponse.error || "Registration failed");
       }
     } catch (err: any) {
+      console.error("Registration error:", err);
       setError(err.message || "Registration failed");
     } finally {
       setLoading(false);
     }
   };
-
 
   const handleUsernameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,13 +116,13 @@ export default function RegisterPage() {
       const loginResponse = await apiRequest("/api/auth/login/", {
         method: "POST",
         body: JSON.stringify({
-          email: formData.email,
+          username: formData.email,
           password: formData.password,
         }),
       });
 
       if (loginResponse.success) {
-        localStorage.setItem("token", loginResponse.token);
+        localStorage.setItem("auth_token", loginResponse.token); // Use consistent key
         navigate("/session/create");
       }
     } catch (err: any) {
