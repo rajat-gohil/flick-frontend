@@ -60,13 +60,15 @@ export default function PreferencesPage() {
   const navigate = useNavigate();
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string[]>>({
+  const [answers, setAnswers] = useState<Record<string, string[]>>({  // ✅ FIXED
     mood: [],
     pace: [],
     vibe: [],
+    era: [],  // ✅ ADD THIS LINE
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [compatibilityMessage, setCompatibilityMessage] = useState("");
 
   const question = QUESTIONS[currentQuestion];
   const isLastQuestion = currentQuestion === QUESTIONS.length - 1;
@@ -115,48 +117,59 @@ export default function PreferencesPage() {
     }
   }
 
-    async function handleSubmit() {
-      setIsSubmitting(true);
-      setError("");
+  async function handleSubmit() {
+    setIsSubmitting(true);
+    setError("");
 
-      try {
-        const response = await apiRequest("/api/sessions/preferences/", {
-          method: "POST",
-          body: JSON.stringify({
-            session_id: Number(id),
-            preferences: answers,
-          }),
-        });
-
-        trackEvent("preferences_submitted", {
+    try {
+      const response = await apiRequest("/api/sessions/preferences/", {
+        method: "POST",
+        body: JSON.stringify({
           session_id: Number(id),
-          answers,
-        });
+          preferences: answers,
+        }),
+      });
 
-        // ✅ NEW: Show overlap score if both ready
-        if (response.both_ready && response.overlap_score !== undefined) {
-          const score = response.overlap_score;
-          let message = "";
-          
-          if (score >= 60) {
-            message = `🎉 ${score}% match! You're very aligned!`;
-          } else if (score >= 30) {
-            message = `✨ ${score}% match. Some overlap!`;
-          } else {
-            message = `🤔 ${score}% match. Opposites attract?`;
-          }
-          
-          // Show alert or toast (you can replace with a nicer UI)
-          alert(message);
+      trackEvent("preferences_submitted", {
+        session_id: Number(id),
+        answers,
+      });
+
+      // ✅ IMPROVED: Better compatibility feedback
+      if (response.both_ready && response.overlap_score !== undefined) {
+        const score = response.overlap_score;
+        let message = "";
+        let emoji = "";
+        
+        if (score >= 70) {
+          message = `Perfect match! You're incredibly aligned in taste.`;
+          emoji = "🎉";
+        } else if (score >= 50) {
+          message = `Great match! You have strong compatibility (${score}%).`;
+          emoji = "✨";
+        } else if (score >= 30) {
+          message = `Good match! You share some common interests (${score}%).`;
+          emoji = "👍";
+        } else {
+          message = `Interesting mix! Opposites can create great discoveries (${score}% match).`;
+          emoji = "🤝";
         }
-
-        navigate(`/session/${id}`);
-      } catch (err) {
-        console.error("Failed to submit preferences:", err);
-        setError("Failed to save preferences. Please try again.");
-        setIsSubmitting(false);
+        
+        // Show better UI instead of alert
+        setCompatibilityMessage(`${emoji} ${message}`);
+        setTimeout(() => {
+          navigate(`/session/${id}`);
+        }, 3000); // Auto-navigate after showing message
+        return;
       }
+
+      navigate(`/session/${id}`);
+    } catch (err) {
+      console.error("Failed to submit preferences:", err);
+      setError("Failed to save preferences. Please try again.");
+      setIsSubmitting(false);
     }
+  }
 
   /* ============================
      RENDER
@@ -185,6 +198,15 @@ export default function PreferencesPage() {
           <h1 className="text-2xl font-bold">{question.question}</h1>
           <p className="text-sm text-gray-600">Select all that apply</p>
         </div>
+
+        {compatibilityMessage && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-xl max-w-sm mx-4 text-center animate-pulse">
+              <div className="text-4xl mb-4">🎬</div>
+              <p className="text-gray-800">{compatibilityMessage}</p>
+            </div>
+          </div>
+        )}
 
         {/* Options */}
         <div className="space-y-3">
