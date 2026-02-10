@@ -69,6 +69,7 @@ export default function SessionPage() {
   useState<"online" | "offline" | "swiping">("online");
   const [swipeCount, setSwipeCount] = useState(0);
   const recommendationsFetchedRef = useRef(false);
+  const [checkingMore, setCheckingMore] = useState(false);
 
 
 /* ============================
@@ -524,15 +525,52 @@ export default function SessionPage() {
 ============================ */
 
 if (currentIndex >= movies.length) {
+  // ✅ Check if we should fetch more or truly exhausted
+  
+  const fetchMoreMovies = async () => {
+    setCheckingMore(true);
+    try {
+      const recos = await apiRequest(
+        `/api/recommendations/?session_id=${id}`
+      );
+
+      if (recos.exhausted || recos.movies.length === 0) {
+        // Truly no more movies
+        setError("No more movies match your preferences!");
+      } else {
+        // Got more movies
+        setMovies(recos.movies);
+        setCurrentIndex(0);
+        trackEvent("movies_refetched", {
+          session_id: Number(id),
+          count: recos.movies.length,
+        });
+      }
+    } catch {
+      setError("Failed to load more movies");
+    } finally {
+      setCheckingMore(false);
+    }
+  };
+
   return (
     <div className="mx-auto mt-24 max-w-md px-6 space-y-4 text-center">
       <h2 className="text-xl font-bold">
-        You’ve reached the end 🎬
+        You've reached the end 🎬
       </h2>
 
       <p className="text-sm text-gray-600">
-        You’ve seen all available movies for this session.
+        You've seen all movies in this batch.
       </p>
+
+      {/* ✅ NEW: Option to load more */}
+      <button
+        onClick={fetchMoreMovies}
+        disabled={checkingMore}
+        className="w-full rounded-xl bg-purple-600 py-3 font-bold text-white hover:bg-purple-700 disabled:opacity-50"
+      >
+        {checkingMore ? "Checking..." : "Load More Movies"}
+      </button>
 
       <button
         onClick={async () => {
@@ -555,7 +593,7 @@ if (currentIndex >= movies.length) {
         }}
         className="w-full rounded-xl bg-black py-3 font-bold text-white"
       >
-        End Session
+        End Session & See Matches
       </button>
     </div>
   );
