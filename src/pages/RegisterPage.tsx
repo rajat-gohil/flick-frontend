@@ -47,7 +47,8 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const response = await apiRequest("/api/auth/register/", {
+      // Register user
+      const registerResponse = await apiRequest("/api/auth/register/", {
         method: "POST",
         body: JSON.stringify({
           email: formData.email,
@@ -55,10 +56,25 @@ export default function RegisterPage() {
         }),
       });
 
-      if (response.success) {
-        setUserId(response.user_id);
-        setUsernameSuggestions(generateUsernameSuggestions(formData.email));
-        setStep("username");
+      if (registerResponse.success) {
+        // AUTO LOGIN AFTER REGISTRATION
+        const loginResponse = await apiRequest("/api/auth/login/", {
+          method: "POST",
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
+        });
+
+        if (loginResponse.success) {
+          // Store token
+          localStorage.setItem("token", loginResponse.token);
+          
+          // Set user ID for username setup
+          setUserId(loginResponse.user_id);
+          setUsernameSuggestions(generateUsernameSuggestions(formData.email));
+          setStep("username");
+        }
       }
     } catch (err: any) {
       setError(err.message || "Registration failed");
@@ -66,6 +82,7 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
+
 
   const handleUsernameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

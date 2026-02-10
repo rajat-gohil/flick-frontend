@@ -10,7 +10,9 @@ import PreferencesPage from "../pages/PreferencesPage";
 import RequireAuth from "../components/RequireAuth";
 import JoinViaLink from "../pages/JoinViaLink";
 import AutoJoin from "../pages/AutoJoin";
-import ProfilePage from "../pages/ProfilePage"; // ✅ ADD THIS
+import ProfilePage from "../pages/ProfilePage";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/ResetPasswordPage";
 
 export default function AppRouter() {
   return (
@@ -21,6 +23,8 @@ export default function AppRouter() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/join/:sessionCode" element={<JoinViaLink />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} />
 
         <Route
           path="/auto-join"
