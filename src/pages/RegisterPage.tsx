@@ -94,6 +94,7 @@ const handleRegister = async (e: React.FormEvent) => {
   }
 };
 
+// USE THIS NEW VERSION:
 const handleUsernameSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   if (!username.trim()) {
@@ -103,27 +104,18 @@ const handleUsernameSubmit = async (e: React.FormEvent) => {
 
   setLoading(true);
   try {
-    // Update user with username
-    await apiRequest("/api/users/update-username/", {
+    // Update user with username (auth token handled automatically)
+    const response = await apiRequest("/api/users/update-username/", {
       method: "POST",
       body: JSON.stringify({
-        user_id: userId,
-        username: username.trim(),
+        username: username.trim(),  // ✅ Only username, no user_id
       }),
     });
 
-    // Login the user - FIX: Use 'username' field
-    const loginResponse = await apiRequest("/api/auth/login/", {
-      method: "POST",
-      body: JSON.stringify({
-        username: formData.email,  // ✅ FIX: Use 'username' not 'email'
-        password: formData.password,
-      }),
-    });
-
-    if (loginResponse.success) {
-      localStorage.setItem("auth_token", loginResponse.token);
+    if (response.success) {
       navigate("/session/create");
+    } else {
+      setError(response.error || "Failed to set username");
     }
   } catch (err: any) {
     setError(err.message || "Failed to set username");
@@ -131,6 +123,8 @@ const handleUsernameSubmit = async (e: React.FormEvent) => {
     setLoading(false);
   }
 };
+
+
 
   if (step === "register") {
     return (
