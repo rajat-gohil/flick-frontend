@@ -86,7 +86,7 @@ export default function RegisterPage() {
       });
 
       // Login the user
-      const loginResponse = await apiRequest("/api/login/", {
+      const loginResponse = await apiRequest("/api/auth/login/", {
         method: "POST",
         body: JSON.stringify({
           email: formData.email,
