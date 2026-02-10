@@ -17,7 +17,6 @@ export default function RegisterPage() {
   const [usernameSuggestions, setUsernameSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [userId, setUserId] = useState<number | null>(null);
 
   // Generate username suggestions based on email
   const generateUsernameSuggestions = (email: string) => {
@@ -31,100 +30,96 @@ export default function RegisterPage() {
     return suggestions.slice(0, 4);
   };
 
-const handleRegister = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError("");
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
 
-  if (formData.password !== formData.confirmPassword) {
-    setError("Passwords do not match");
-    return;
-  }
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
 
-  if (formData.password.length < 6) {
-    setError("Password must be at least 6 characters");
-    return;
-  }
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
 
-  setLoading(true);
-  try {
-    // Register user
-    const registerResponse = await apiRequest("/api/auth/register/", {
-      method: "POST",
-      body: JSON.stringify({
-        email: formData.email,
-        password: formData.password,
-      }),
-    });
-
-    console.log("Registration response:", registerResponse);
-
-    if (registerResponse.success) {
-      console.log("Registration successful, attempting login...");
-      
-      // AUTO LOGIN AFTER REGISTRATION - FIX: Use 'username' field
-      const loginResponse = await apiRequest("/api/auth/login/", {
+    setLoading(true);
+    try {
+      // Register user
+      const registerResponse = await apiRequest("/api/auth/register/", {
         method: "POST",
         body: JSON.stringify({
-          username: formData.email,  // ✅ FIX: Use 'username' not 'email'
+          email: formData.email,
           password: formData.password,
         }),
       });
 
-      console.log("Login response:", loginResponse);
+      console.log("Registration response:", registerResponse);
 
-      if (loginResponse.success) {
-        // Store token
-        localStorage.setItem("auth_token", loginResponse.token);
+      if (registerResponse.success) {
+        console.log("Registration successful, attempting login...");
         
-        // Set user ID for username setup
-        setUserId(loginResponse.user_id);
-        setUsernameSuggestions(generateUsernameSuggestions(formData.email));
-        setStep("username");
+        // AUTO LOGIN AFTER REGISTRATION
+        const loginResponse = await apiRequest("/api/auth/login/", {
+          method: "POST",
+          body: JSON.stringify({
+            username: formData.email,
+            password: formData.password,
+          }),
+        });
+
+        console.log("Login response:", loginResponse);
+
+        if (loginResponse.success) {
+          // Store token
+          localStorage.setItem("auth_token", loginResponse.token);
+          
+          // Generate username suggestions
+          setUsernameSuggestions(generateUsernameSuggestions(formData.email));
+          setStep("username");
+        } else {
+          setError(loginResponse.error || "Login failed after registration");
+        }
       } else {
-        setError(loginResponse.error || "Login failed after registration");
+        setError(registerResponse.error || "Registration failed");
       }
-    } else {
-      setError(registerResponse.error || "Registration failed");
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      setError(err.message || "Registration failed");
+    } finally {
+      setLoading(false);
     }
-  } catch (err: any) {
-    console.error("Registration error:", err);
-    setError(err.message || "Registration failed");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
-// USE THIS NEW VERSION:
-const handleUsernameSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!username.trim()) {
-    setError("Please enter a username");
-    return;
-  }
-
-  setLoading(true);
-  try {
-    // Update user with username (auth token handled automatically)
-    const response = await apiRequest("/api/users/update-username/", {
-      method: "POST",
-      body: JSON.stringify({
-        username: username.trim(),  // ✅ Only username, no user_id
-      }),
-    });
-
-    if (response.success) {
-      navigate("/session/create");
-    } else {
-      setError(response.error || "Failed to set username");
+  const handleUsernameSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username.trim()) {
+      setError("Please enter a username");
+      return;
     }
-  } catch (err: any) {
-    setError(err.message || "Failed to set username");
-  } finally {
-    setLoading(false);
-  }
-};
 
+    setLoading(true);
+    try {
+      // Update user with username (auth token handled automatically)
+      const response = await apiRequest("/api/users/update-username/", {
+        method: "POST",
+        body: JSON.stringify({
+          username: username.trim(),
+        }),
+      });
 
+      if (response.success) {
+        navigate("/session/create");
+      } else {
+        setError(response.error || "Failed to set username");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to set username");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (step === "register") {
     return (
