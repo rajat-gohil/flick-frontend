@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../lib/api";
 import { trackEvent } from "../lib/analytics";
 
+
 /* ============================
    TYPES
 ============================ */
@@ -73,6 +74,7 @@ export default function CreateSessionPage() {
   const [sessionCode, setSessionCode] = useState<string>("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+    
 
   /* ============================
      LOAD GENRES
@@ -225,9 +227,18 @@ export default function CreateSessionPage() {
       {/* STEP 1: Industry Selection */}
       {step === "industry" && (
         <div className="space-y-6">
-          <h1 className="text-2xl font-bold text-center">
-            Choose movie preference
-          </h1>
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold">
+              Choose movie preference
+            </h1>
+            <button 
+              onClick={() => navigate("/profile")}
+              className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
+            >
+              Profile
+            </button>
+          </div>
+
           
           <div className="space-y-4">
             <button
@@ -271,7 +282,16 @@ export default function CreateSessionPage() {
             >
               ← Back to industry selection
             </button>
-            <h1 className="text-2xl font-bold">Select Languages</h1>
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl font-bold">Select Languages</h1>
+              <button 
+                onClick={() => navigate("/profile")}
+                className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
+              >
+                Profile
+              </button>
+            </div>
+
             <p className="text-sm text-gray-600 mt-1">
               Choose one or more languages
             </p>
@@ -326,7 +346,15 @@ export default function CreateSessionPage() {
             >
               ← Back to language selection
             </button>
-            <h1 className="text-2xl font-bold">Create Session</h1>
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl font-bold">Create Session</h1>
+              <button 
+                onClick={() => navigate("/profile")}
+                className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
+              >
+                Profile
+              </button>
+            </div>
             <p className="text-sm text-gray-600 mt-1">
               {industry === "bollywood" && "🎬 Indian Movies"}
               {industry === "hollywood" && "🎥 Hollywood"}
@@ -387,7 +415,15 @@ export default function CreateSessionPage() {
       {step === "created" && sessionId && sessionCode && (
         <div className="space-y-6">
           <div className="text-center">
-            <h1 className="text-2xl font-bold">Session Created!</h1>
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl font-bold">Session Created!</h1>
+              <button 
+                onClick={() => navigate("/profile")}
+                className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
+              >
+                Profile
+              </button>
+            </div>
             <p className="text-sm text-gray-600 mt-1">
               Share this code with your friend to join
             </p>

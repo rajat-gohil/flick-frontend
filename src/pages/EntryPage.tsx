@@ -15,9 +15,19 @@ export default function EntryPage() {
   return (
     <div className="mx-auto mt-24 max-w-md px-6 space-y-6 text-center">
       {/* App title */}
-      <h1 className="text-3xl font-bold">
-        Flick
-      </h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">
+          Flick
+        </h1>
+        {isAuthenticated && (
+          <button 
+            onClick={() => navigate("/profile")}
+            className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
+          >
+            Profile
+          </button>
+        )}
+      </div>
 
       <p className="text-gray-600">
         Find a movie together.

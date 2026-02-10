@@ -10,6 +10,7 @@ import PreferencesPage from "../pages/PreferencesPage";
 import RequireAuth from "../components/RequireAuth";
 import JoinViaLink from "../pages/JoinViaLink";
 import AutoJoin from "../pages/AutoJoin";
+import ProfilePage from "../pages/ProfilePage"; // ✅ ADD THIS
 
 export default function AppRouter() {
   return (
@@ -22,14 +23,24 @@ export default function AppRouter() {
         <Route path="/join/:sessionCode" element={<JoinViaLink />} />
 
         <Route
-  path="/auto-join"
-  element={
-    <RequireAuth>
-      <AutoJoin />
-    </RequireAuth>
-  }
-/>
+          path="/auto-join"
+          element={
+            <RequireAuth>
+              <AutoJoin />
+            </RequireAuth>
+          }
+        />
+        
         {/* Protected */}
+        <Route
+          path="/profile" // ✅ ADD PROFILE ROUTE
+          element={
+            <RequireAuth>
+              <ProfilePage />
+            </RequireAuth>
+          }
+        />
+
         <Route
           path="/session/create"
           element={
