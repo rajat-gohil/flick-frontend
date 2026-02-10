@@ -230,15 +230,14 @@ export default function SessionPage() {
           return;
         }
 
-        // ✅ FIXED: Prevent infinite redirect loop
-        // Only redirect ONCE when both joined but prefs not set
+        // ✅ PREVENT MULTIPLE REDIRECTS - Only redirect once
         if (
           s.host_joined && 
           s.guest_joined && 
           !s.preferences_set && 
-          !preferencesRedirectedRef.current  // ✅ NEW: Track if already redirected
+          !preferencesRedirectedRef.current
         ) {
-          preferencesRedirectedRef.current = true;  // ✅ MARK as redirected
+          preferencesRedirectedRef.current = true;
           navigate(`/session/${id}/preferences`);
           return;
         }
