@@ -21,7 +21,10 @@ export default function ForgotPasswordPage() {
       });
 
       if (response.success) {
+        // In development, show the reset link/info
         setSuccess(true);
+        // For testing: you can show the uid/token to manually test reset
+        console.log("Reset info:", response.uid, response.token);
       } else {
         setError(response.error || "Failed to send reset link");
       }
@@ -31,6 +34,7 @@ export default function ForgotPasswordPage() {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="mx-auto mt-24 max-w-md px-6 space-y-6">

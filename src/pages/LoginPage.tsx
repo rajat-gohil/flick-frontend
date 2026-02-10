@@ -16,10 +16,11 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      // User can login with either email or username
       const data = await apiRequest("/api/auth/login/", {
         method: "POST",
         body: JSON.stringify({
-          username: email,
+          username: email,  // This field accepts both email and username
           password,
         }),
       });
@@ -27,7 +28,7 @@ export default function LoginPage() {
       localStorage.setItem("auth_token", data.token);
       navigate("/");
     } catch (err: unknown) {
-      let message = "Invalid credentials";
+      let message = "Invalid credentials. You can login with your email or username.";
 
       if (typeof err === "object" && err !== null) {
         const e = err as {
@@ -43,6 +44,7 @@ export default function LoginPage() {
       setLoading(false);
     }
   }
+
 
   return (
     <div className="mx-auto mt-24 w-full max-w-sm px-6 space-y-6">
