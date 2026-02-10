@@ -47,7 +47,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const response = await apiRequest("/api/register/", {
+      const response = await apiRequest("/api/auth/register/", {
         method: "POST",
         body: JSON.stringify({
           email: formData.email,
