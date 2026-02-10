@@ -71,6 +71,7 @@ export default function SessionPage() {
   const recommendationsFetchedRef = useRef(false);
   const [checkingMore, setCheckingMore] = useState(false);
   const preferencesRedirectedRef = useRef(false);
+  
 
 
 /* ============================
@@ -230,7 +231,7 @@ export default function SessionPage() {
           return;
         }
 
-        // ✅ PREVENT MULTIPLE REDIRECTS - Only redirect once
+        // Prevent multiple redirects to preferences
         if (
           s.host_joined && 
           s.guest_joined && 
@@ -247,7 +248,7 @@ export default function SessionPage() {
           preferencesRedirectedRef.current = false;
         }
 
-        // Load recommendations ONCE after both users join AND prefs are set
+        // Load recommendations only once
         if (moviesLoaded) return;
 
         if (
@@ -286,7 +287,6 @@ export default function SessionPage() {
     const intervalId = window.setInterval(pollSession, 3000);
     return () => clearInterval(intervalId);
   }, [id, moviesLoaded, summaryLoaded, loadMatchHistory, navigate]);
-
 
   /* ============================
      SWIPE HANDLER

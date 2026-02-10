@@ -42,7 +42,7 @@ const QUESTIONS = [
     question: "What era do you prefer?",
     options: [
       { value: "classic", label: "🎞️ Classic (Before 2000)", emoji: "🎞️" },
-      { value: "2000s", label: "📀 2000s Era", emoji: "📀" },
+      { value: "2000s", label: "DVD 2000s Era", emoji: "DVD" },
       { value: "2010s", label: "📱 2010s Era", emoji: "📱" },
       { value: "recent", label: "🆕 Recent (2020+)", emoji: "🆕" },
       { value: "any", label: "🎬 Any era is fine", emoji: "🎬" },
@@ -66,7 +66,7 @@ export default function PreferencesPage() {
     era: [],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasSubmitted, setHasSubmitted] = useState(false); // ✅ Track submission
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [compatibilityMessage, setCompatibilityMessage] = useState("");
   const [partnerStatus, setPartnerStatus] = useState<"waiting" | "ready">("waiting");
@@ -75,33 +75,60 @@ export default function PreferencesPage() {
   const isLastQuestion = currentQuestion === QUESTIONS.length - 1;
 
   /* ============================
-     POLL FOR PARTNER STATUS
+     POLL FOR PARTNER STATUS AND SESSION UPDATES
   ============================ */
   
   useEffect(() => {
-    if (!hasSubmitted) return;
+    let intervalId: number; // ✅ Changed from NodeJS.Timeout to number
     
-    const interval = setInterval(async () => {
-      try {
-        const response = await apiRequest(`/api/sessions/${id}/`);
-        if (response.session?.preferences_set) {
-          setPartnerStatus("ready");
-          clearInterval(interval);
+    if (hasSubmitted) {
+      // Poll for partner completion and session updates
+      intervalId = window.setInterval(async () => {
+        try {
+          const response = await apiRequest(`/api/sessions/${id}/`);
+          const session = response.session;
+          
+          // If preferences are set by both users, navigate to session
+          if (session?.preferences_set) {
+            setPartnerStatus("ready");
+            // Give a moment for the compatibility message to show, then navigate
+            setTimeout(() => {
+              navigate(`/session/${id}`);
+            }, 2000);
+          }
+        } catch (err) {
+          console.error("Failed to poll session status:", err);
         }
-      } catch (err) {
-        console.error("Failed to poll session status:", err);
-      }
-    }, 2000);
+      }, 2000);
+    } else {
+      // Before submission, check if partner already finished
+      intervalId = window.setInterval(async () => {
+        try {
+          const response = await apiRequest(`/api/sessions/${id}/`);
+          const session = response.session;
+          
+          // If partner already submitted and we haven't, maybe show a message?
+          if (session?.preferences_set && !hasSubmitted) {
+            // Partner is already done, but we haven't submitted yet
+            // This is fine - they're just waiting for us
+          }
+        } catch (err) {
+          console.error("Failed to poll session status:", err);
+        }
+      }, 3000);
+    }
 
-    return () => clearInterval(interval);
-  }, [hasSubmitted, id]);
+    return () => {
+      if (intervalId) window.clearInterval(intervalId); // ✅ Use window.clearInterval
+    };
+  }, [hasSubmitted, id, navigate]);
 
   /* ============================
      HANDLERS
   ============================ */
 
   function handleSelect(value: string) {
-    if (hasSubmitted) return; // Don't allow changes after submission
+    if (hasSubmitted) return;
     
     const questionId = question.id;
     const currentAnswers = answers[questionId] || [];
@@ -118,7 +145,7 @@ export default function PreferencesPage() {
   }
 
   async function handleNext() {
-    if (hasSubmitted) return; // Don't proceed after submission
+    if (hasSubmitted) return;
     
     const questionId = question.id;
 
@@ -138,7 +165,7 @@ export default function PreferencesPage() {
   }
 
   function handleBack() {
-    if (hasSubmitted) return; // Don't go back after submission
+    if (hasSubmitted) return;
     
     if (currentQuestion > 0) {
       setCurrentQuestion((prev) => prev - 1);
@@ -147,7 +174,7 @@ export default function PreferencesPage() {
   }
 
   async function handleSubmit() {
-    if (hasSubmitted) return; // Prevent multiple submissions
+    if (hasSubmitted) return;
     
     setIsSubmitting(true);
     setError("");
@@ -166,7 +193,7 @@ export default function PreferencesPage() {
         answers,
       });
 
-      setHasSubmitted(true); // ✅ Mark as submitted
+      setHasSubmitted(true);
       setIsSubmitting(false);
 
       // Show compatibility message if both ready
@@ -190,11 +217,6 @@ export default function PreferencesPage() {
         }
         
         setCompatibilityMessage(`${emoji} ${message}`);
-        
-        // Auto-navigate after showing message
-        setTimeout(() => {
-          navigate(`/session/${id}`);
-        }, 3000);
       }
       
     } catch (err) {
@@ -208,7 +230,7 @@ export default function PreferencesPage() {
      RENDER
   ============================ */
 
-  // ✅ Show waiting screen after submission
+  // Show waiting screen after submission
   if (hasSubmitted) {
     return (
       <div className="mx-auto mt-24 max-w-md px-6 space-y-6">
@@ -218,7 +240,7 @@ export default function PreferencesPage() {
           </div>
           <h1 className="text-2xl font-bold">
             {partnerStatus === "ready" 
-              ? "Great! Let's go!" 
+              ? "Great minds think alike!" 
               : "Hang tight!"}
           </h1>
           <p className="text-gray-600">
@@ -267,15 +289,6 @@ export default function PreferencesPage() {
           <p className="text-sm text-gray-600">Select all that apply</p>
         </div>
 
-        {compatibilityMessage && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-xl max-w-sm mx-4 text-center animate-pulse">
-              <div className="text-4xl mb-4">🎬</div>
-              <p className="text-gray-800">{compatibilityMessage}</p>
-            </div>
-          </div>
-        )}
-
         {/* Options */}
         <div className="space-y-3">
           {question.options.map((option) => {
@@ -285,7 +298,7 @@ export default function PreferencesPage() {
                 key={option.value}
                 type="button"
                 onClick={() => handleSelect(option.value)}
-                disabled={hasSubmitted} // Disable after submission
+                disabled={hasSubmitted}
                 className={`w-full rounded-xl border-2 px-6 py-4 text-left transition-all ${
                   isSelected
                     ? "border-black bg-black text-white font-bold scale-105"
