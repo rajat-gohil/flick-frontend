@@ -94,6 +94,17 @@ export default function JoinSessionPage() {
       <h1 className="text-2xl font-bold text-center">
         Join a Session
       </h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">
+          Join a Session
+        </h1>
+        <button 
+          onClick={() => navigate("/")}
+          className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
+        >
+          Home
+        </button>
+      </div>
 
       {error && (
         <p className="text-sm text-red-500 text-center">

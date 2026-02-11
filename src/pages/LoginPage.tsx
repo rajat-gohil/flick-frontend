@@ -47,7 +47,15 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto mt-24 w-full max-w-sm px-6 space-y-6">
-      <h1 className="text-2xl font-bold text-center">Login</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Login</h1>
+        <button 
+          onClick={() => navigate("/")}
+          className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
+        >
+          Home
+        </button>
+      </div>
 
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg">

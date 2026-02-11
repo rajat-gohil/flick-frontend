@@ -110,7 +110,7 @@ export default function RegisterPage() {
       });
 
       if (response.success) {
-        navigate("/session/create");
+        navigate("/");
       } else {
         setError(response.error || "Failed to set username");
       }
@@ -130,6 +130,13 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleRegister} className="space-y-4">
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          className="text-sm text-gray-500 hover:text-gray-700 mb-4"
+        >
+          ← Back to Home
+        </button>
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-600 text-center">{error}</p>

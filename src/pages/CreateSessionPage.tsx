@@ -231,15 +231,22 @@ export default function CreateSessionPage() {
             <h1 className="text-2xl font-bold">
               Choose movie preference
             </h1>
-            <button 
-              onClick={() => navigate("/profile")}
-              className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
-            >
-              Profile
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => navigate("/")}
+                className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
+              >
+                Home
+              </button>
+              <button 
+                onClick={() => navigate("/profile")}
+                className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
+              >
+                Profile
+              </button>
+            </div>
           </div>
-
-          
+         
           <div className="space-y-4">
             <button
               type="button"
@@ -284,12 +291,20 @@ export default function CreateSessionPage() {
             </button>
             <div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold">Select Languages</h1>
-              <button 
-                onClick={() => navigate("/profile")}
-                className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
-              >
-                Profile
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => navigate("/")}
+                  className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
+                >
+                  Home
+                </button>
+                <button 
+                  onClick={() => navigate("/profile")}
+                  className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
+                >
+                  Profile
+                </button>
+              </div>
             </div>
 
             <p className="text-sm text-gray-600 mt-1">
@@ -346,15 +361,24 @@ export default function CreateSessionPage() {
             >
               ← Back to language selection
             </button>
-            <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold">Create Session</h1>
-              <button 
-                onClick={() => navigate("/profile")}
-                className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
-              >
-                Profile
-              </button>
-            </div>
+              <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold">Create Session</h1>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => navigate("/")}
+                    className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
+                  >
+                    Home
+                  </button>
+                  <button 
+                    onClick={() => navigate("/profile")}
+                    className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
+                  >
+                    Profile
+                  </button>
+                </div>
+              </div>
+
             <p className="text-sm text-gray-600 mt-1">
               {industry === "bollywood" && "🎬 Indian Movies"}
               {industry === "hollywood" && "🎥 Hollywood"}
@@ -417,13 +441,22 @@ export default function CreateSessionPage() {
           <div className="text-center">
             <div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold">Session Created!</h1>
-              <button 
-                onClick={() => navigate("/profile")}
-                className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
-              >
-                Profile
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => navigate("/")}
+                  className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
+                >
+                  Home
+                </button>
+                <button 
+                  onClick={() => navigate("/profile")}
+                  className="text-sm bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2"
+                >
+                  Profile
+                </button>
+              </div>
             </div>
+
             <p className="text-sm text-gray-600 mt-1">
               Share this code with your friend to join
             </p>
