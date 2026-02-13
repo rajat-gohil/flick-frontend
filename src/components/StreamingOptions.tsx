@@ -17,7 +17,6 @@ interface StreamingOptionsProps {
 export default function StreamingOptions({ movieId, movieTitle, onProviderClick }: StreamingOptionsProps) {
   const [providers, setProviders] = useState<StreamingProvider[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchStreamingOptions = async () => {
@@ -29,7 +28,8 @@ export default function StreamingOptions({ movieId, movieTitle, onProviderClick 
           setProviders(response.providers);
         }
       } catch (err) {
-        setError("Failed to load streaming options");
+        // Silently fail - fallback to search button
+        console.log("Streaming options fetch failed, using search fallback");
       } finally {
         setLoading(false);
       }
@@ -40,64 +40,73 @@ export default function StreamingOptions({ movieId, movieTitle, onProviderClick 
     }
   }, [movieId]);
 
+  // Simplified approach - always show search button as fallback
   if (loading) {
-    return <div className="text-center py-4">Loading streaming options...</div>;
+    return (
+      <div className="space-y-3">
+        <div className="text-center py-4">Loading streaming options...</div>
+        <div className="text-center">
+          <button
+            onClick={() => {
+              const searchUrl = `https://www.justwatch.com/in/search?q=${encodeURIComponent(movieTitle)}`;
+              window.open(searchUrl, '_blank');
+            }}
+            className="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg hover:bg-purple-200 text-sm"
+          >
+            🎬 Find Where to Watch
+          </button>
+        </div>
+      </div>
+    );
   }
 
-  if (error) {
-    return (
-      <div className="text-center py-4">
-        <p className="text-red-500 text-sm">{error}</p>
-        <button 
+  // Always show search button, plus providers if available
+  return (
+    <div className="space-y-3">
+      {providers.length > 0 && (
+        <>
+          <h3 className="font-semibold text-sm">Available on:</h3>
+          <div className="flex flex-wrap gap-2">
+            {providers.map((provider, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  if (provider.url) {
+                    window.open(provider.url, '_blank');
+                    if (onProviderClick) onProviderClick(provider.url);
+                  }
+                }}
+                className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2 hover:bg-gray-200 transition-colors"
+              >
+                {provider.logo_url ? (
+                  <img 
+                    src={provider.logo_url} 
+                    alt={provider.name}
+                    className="w-6 h-6 object-contain"
+                  />
+                ) : (
+                  <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center text-xs">
+                    {provider.name.charAt(0)}
+                  </div>
+                )}
+                <span className="text-xs font-medium">{provider.name}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      
+      {/* Always show search button as fallback */}
+      <div className="text-center pt-2">
+        <button
           onClick={() => {
             const searchUrl = `https://www.justwatch.com/in/search?q=${encodeURIComponent(movieTitle)}`;
             window.open(searchUrl, '_blank');
           }}
-          className="text-blue-600 underline text-sm mt-2"
+          className="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg hover:bg-purple-200 text-sm"
         >
-          Search on JustWatch
+          🎬 Find Where to Watch
         </button>
-      </div>
-    );
-  }
-
-  if (providers.length === 0) {
-    return (
-      <div className="text-center py-4 text-gray-500">
-        No streaming options found
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      <h3 className="font-semibold text-sm">Available on:</h3>
-      <div className="flex flex-wrap gap-2">
-        {providers.map((provider, index) => (
-          <button
-            key={index}
-            onClick={() => {
-              if (provider.url) {
-                window.open(provider.url, '_blank');
-                if (onProviderClick) onProviderClick(provider.url);
-              }
-            }}
-            className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2 hover:bg-gray-200 transition-colors"
-          >
-            {provider.logo_url ? (
-              <img 
-                src={provider.logo_url} 
-                alt={provider.name}
-                className="w-6 h-6 object-contain"
-              />
-            ) : (
-              <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center text-xs">
-                {provider.name.charAt(0)}
-              </div>
-            )}
-            <span className="text-xs font-medium">{provider.name}</span>
-          </button>
-        ))}
       </div>
     </div>
   );
