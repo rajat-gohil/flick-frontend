@@ -31,3 +31,8 @@ export async function apiRequest(
 
   return data;
 }
+
+export const getStreamingProviders = async (movieId: number) => {
+  const response = await fetch(`/api/movies/${movieId}/streaming/`);
+  return response.json();
+};

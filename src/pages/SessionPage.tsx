@@ -424,15 +424,24 @@ export default function SessionPage() {
                 </p>
               )}
 
-              <p className="text-sm text-gray-600">
-                Where to watch:
-              </p>
-
-              <p className="text-sm text-gray-500">
-                Streaming availability coming soon
-              </p>
+              {/* REPLACED STREAMING TEXT WITH BUTTON */}
+              <button
+                onClick={() => {
+                  const searchUrl = `https://www.justwatch.com/in/search?q=${encodeURIComponent(m.movie_title)}`;
+                  window.open(searchUrl, '_blank');
+                  
+                  trackEvent("session_summary_watch_clicked", {
+                    movie_title: m.movie_title
+                  });
+                }}
+                className="w-full mt-2 rounded-lg bg-purple-100 text-purple-700 py-2 text-sm font-semibold hover:bg-purple-200 transition-colors"
+              >
+                🎬 Find Streaming Options
+              </button>
             </div>
           ))}
+
+          {/* YOUR ORIGINAL BUTTONS - KEPT INTACT */}
           <button
             onClick={() => {
               trackEvent("start_new_session_clicked");
@@ -443,15 +452,17 @@ export default function SessionPage() {
             Start New Session
           </button> 
 
-        <button
-          onClick={() => navigate("/")}
-          className="w-full rounded-xl bg-black py-3 text-white font-bold"
-        >
-          Back to Home
-        </button>
-      </div>
-    );
-  }
+          <button
+            onClick={() => navigate("/")}
+            className="w-full rounded-xl bg-black py-3 text-white font-bold"
+          >
+            Back to Home
+          </button>
+        </div>
+        );
+      }
+
+
 
   /* ============================
      WAITING ROOM
@@ -479,53 +490,87 @@ export default function SessionPage() {
      MATCH POPUP
   ============================ */
 
-  if (showMatch && matchedMovie) {
-    return (
-      <div className="mx-auto mt-24 max-w-md px-6 space-y-6 text-center
-                animate-in fade-in zoom-in duration-300">
-        <h1 className="text-3xl font-bold text-green-600">
-          It’s a Match! 🎉
-        </h1>
+ /* ============================
+   MATCH POPUP
+============================ */
 
-        <h2 className="font-bold">
-          {matchedMovie.title}
-        </h2>
+if (showMatch && matchedMovie) {
+  return (
+    <div className="mx-auto mt-24 max-w-md px-6 space-y-6 text-center animate-in fade-in zoom-in duration-300">
+      <h1 className="text-3xl font-bold text-green-600">
+        It's a Match! 🎉
+      </h1>
 
-        <img
-          src={matchedMovie.poster_url}
-          className="rounded-xl mx-auto"
-        />
+      <h2 className="font-bold">
+        {matchedMovie.title}
+      </h2>
 
-        <button
-          onClick={() => {
-            trackEvent("match_continue");
-            setShowMatch(false);
-            setMatchedMovie(null);
-            setCurrentIndex((prev) => prev + 1);
-          }}
-          className="w-full rounded-xl bg-black py-3 text-white font-bold"
-        >
-          Continue Swiping
-        </button>
+      <img
+        src={matchedMovie.poster_url}
+        className="rounded-xl mx-auto"
+      />
 
-        <button
-          onClick={async () => {
-            trackEvent("match_end_session");
-            await apiRequest("/api/sessions/end/", {
-              method: "POST",
-              body: JSON.stringify({
-                session_id: Number(id),
-              }),
+      {/* ✅ ADD THIS STREAMING BUTTON */}
+      <button
+        onClick={async () => {
+          try {
+            // Track the click
+            trackEvent("match_watch_now_clicked", {
+              movie_id: matchedMovie.id,
+              movie_title: matchedMovie.title
             });
-            setSessionLocked(true);
-          }}
-          className="w-full rounded-xl border py-3 font-bold"
-        >
-          End Session
-        </button>
-      </div>
-    );
-  }
+            
+            // Get streaming URL and redirect
+            const response = await apiRequest(`/api/movies/${matchedMovie.id}/streaming-url/`);
+            if (response.url) {
+              window.open(response.url, '_blank');
+            } else {
+              // Fallback to JustWatch search
+              const searchUrl = `https://www.justwatch.com/in/search?q=${encodeURIComponent(matchedMovie.title)}`;
+              window.open(searchUrl, '_blank');
+            }
+          } catch (error) {
+            // Fallback on error
+            const searchUrl = `https://www.justwatch.com/in/search?q=${encodeURIComponent(matchedMovie.title)}`;
+            window.open(searchUrl, '_blank');
+          }
+        }}
+        className="w-full rounded-xl bg-purple-600 py-3 text-white font-bold hover:bg-purple-700 transition-colors"
+      >
+        🎬 Watch Now
+      </button>
+
+      <button
+        onClick={() => {
+          trackEvent("match_continue");
+          setShowMatch(false);
+          setMatchedMovie(null);
+          setCurrentIndex((prev) => prev + 1);
+        }}
+        className="w-full rounded-xl bg-black py-3 text-white font-bold"
+      >
+        Continue Swiping
+      </button>
+
+      <button
+        onClick={async () => {
+          trackEvent("match_end_session");
+          await apiRequest("/api/sessions/end/", {
+            method: "POST",
+            body: JSON.stringify({
+              session_id: Number(id),
+            }),
+          });
+          setSessionLocked(true);
+        }}
+        className="w-full rounded-xl border py-3 font-bold"
+      >
+        End Session
+      </button>
+    </div>
+  );
+}
+
 
 /* ============================
    NO MORE MOVIES
