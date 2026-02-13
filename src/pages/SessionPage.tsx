@@ -4,6 +4,7 @@ import { apiRequest } from "../lib/api";
 import { trackEvent } from "../lib/analytics";
 import confetti from "canvas-confetti";
 import { motion, AnimatePresence } from "framer-motion";
+import StreamingOptions from "../components/StreamingOptions";
 
 /* ============================
    TYPES (MATCH BACKEND)
@@ -424,20 +425,11 @@ export default function SessionPage() {
                 </p>
               )}
 
-              {/* REPLACED STREAMING TEXT WITH BUTTON */}
-              <button
-                onClick={() => {
-                  const searchUrl = `https://www.justwatch.com/in/search?q=${encodeURIComponent(m.movie_title)}`;
-                  window.open(searchUrl, '_blank');
-                  
-                  trackEvent("session_summary_watch_clicked", {
-                    movie_title: m.movie_title
-                  });
-                }}
-                className="w-full mt-2 rounded-lg bg-purple-100 text-purple-700 py-2 text-sm font-semibold hover:bg-purple-200 transition-colors"
-              >
-                🎬 Find Streaming Options
-              </button>
+              {/* ADD STREAMING OPTIONS IN SUMMARY */}
+              <StreamingOptions 
+                movieId={m.movie_id}
+                movieTitle={m.movie_title}
+              />
             </div>
           ))}
 
@@ -486,9 +478,6 @@ export default function SessionPage() {
     );
   }
 
-  /* ============================
-     MATCH POPUP
-  ============================ */
 
  /* ============================
    MATCH POPUP
@@ -510,35 +499,13 @@ if (showMatch && matchedMovie) {
         className="rounded-xl mx-auto"
       />
 
-      {/* ✅ ADD THIS STREAMING BUTTON */}
-      <button
-        onClick={async () => {
-          try {
-            // Track the click
-            trackEvent("match_watch_now_clicked", {
-              movie_id: matchedMovie.id,
-              movie_title: matchedMovie.title
-            });
-            
-            // Get streaming URL and redirect
-            const response = await apiRequest(`/api/movies/${matchedMovie.id}/streaming-url/`);
-            if (response.url) {
-              window.open(response.url, '_blank');
-            } else {
-              // Fallback to JustWatch search
-              const searchUrl = `https://www.justwatch.com/in/search?q=${encodeURIComponent(matchedMovie.title)}`;
-              window.open(searchUrl, '_blank');
-            }
-          } catch (error) {
-            // Fallback on error
-            const searchUrl = `https://www.justwatch.com/in/search?q=${encodeURIComponent(matchedMovie.title)}`;
-            window.open(searchUrl, '_blank');
-          }
-        }}
-        className="w-full rounded-xl bg-purple-600 py-3 text-white font-bold hover:bg-purple-700 transition-colors"
-      >
-        🎬 Watch Now
-      </button>
+      {/* ADD STREAMING OPTIONS DIRECTLY IN APP */}
+      <div className="border rounded-xl p-4">
+        <StreamingOptions 
+          movieId={matchedMovie.id}
+          movieTitle={matchedMovie.title}
+        />
+      </div>
 
       <button
         onClick={() => {
